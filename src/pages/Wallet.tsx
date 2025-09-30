@@ -9,7 +9,9 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { WALLET_LIMITS } from '@/lib/WalletAPI';
+import { formatBRL } from '@/lib/formatCurrency';
 import { toast } from 'sonner';
+import ReceiptModal from '@/components/ReceiptModal';
 
 const Wallet: React.FC = () => {
   const { user } = useAuth();
@@ -17,10 +19,12 @@ const Wallet: React.FC = () => {
   
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [pixKey, setPixKey] = useState('');
   const [showDepositDialog, setShowDepositDialog] = useState(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [currentDepositTxid, setCurrentDepositTxid] = useState<string | null>(null);
-  const [showPixWarning, setShowPixWarning] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptData, setReceiptData] = useState<any>(null);
 
   const handleDeposit = async () => {
     const amount = parseFloat(depositAmount);
@@ -46,18 +50,39 @@ const Wallet: React.FC = () => {
       return;
     }
 
+    if (!pixKey.trim()) {
+      toast.error('Please enter your PIX key');
+      return;
+    }
+
     try {
-      await createWithdraw(amount);
+      const result = await createWithdraw(amount);
       setShowWithdrawDialog(false);
+      setReceiptData({
+        type: 'withdraw',
+        amount,
+        txid: result.txid,
+        pixKey,
+      });
+      setShowReceiptModal(true);
       setWithdrawAmount('');
+      setPixKey('');
     } catch (error) {
       // Error already handled by context
     }
   };
 
-  const handlePixKeyWarning = () => {
-    setShowPixWarning(true);
-    toast.error('⚠️ SECURITY WARNING: Never enter PIX keys or bank credentials here!');
+  const handleConfirmDeposit = () => {
+    if (currentDepositTxid) {
+      forceConfirmTransaction(currentDepositTxid);
+      setShowDepositDialog(false);
+      setReceiptData({
+        type: 'deposit',
+        amount: parseFloat(depositAmount),
+        txid: currentDepositTxid,
+      });
+      setShowReceiptModal(true);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -89,30 +114,18 @@ const Wallet: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-muted p-4 rounded-lg border border-border">
                 <div className="text-sm text-muted-foreground mb-1">Available Balance</div>
-                <div className="text-3xl font-bold text-primary">${user?.balance.toFixed(2)}</div>
+                <div className="text-3xl font-bold text-primary">{formatBRL(user?.balance || 0)}</div>
               </div>
               <div className="bg-muted p-4 rounded-lg border border-border">
                 <div className="text-sm text-muted-foreground mb-1">Pending Balance</div>
-                <div className="text-3xl font-bold text-secondary">${pendingBalance.toFixed(2)}</div>
+                <div className="text-3xl font-bold text-primary">{formatBRL(pendingBalance)}</div>
               </div>
               <div className="bg-muted p-4 rounded-lg border border-border">
                 <div className="text-sm text-muted-foreground mb-1">Total Balance</div>
-                <div className="text-3xl font-bold text-foreground">${(user ? user.balance + pendingBalance : 0).toFixed(2)}</div>
+                <div className="text-3xl font-bold text-foreground">{formatBRL(user ? user.balance + pendingBalance : 0)}</div>
               </div>
             </div>
 
-            {/* Security Warning */}
-            {showPixWarning && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Security Warning</AlertTitle>
-                <AlertDescription>
-                  Never enter PIX keys, bank credentials, or sensitive payment information in this interface.
-                  All payment processing should be handled through secure backend services.
-                  This is a simulated wallet for demonstration purposes.
-                </AlertDescription>
-              </Alert>
-            )}
 
             {/* Deposit/Withdraw Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -124,7 +137,7 @@ const Wallet: React.FC = () => {
                     Deposit
                   </CardTitle>
                   <CardDescription>
-                    Min: ${WALLET_LIMITS.MIN_DEPOSIT} | Max: ${WALLET_LIMITS.MAX_DEPOSIT}
+                    Min: R$ {WALLET_LIMITS.MIN_DEPOSIT} | Max: R$ {WALLET_LIMITS.MAX_DEPOSIT}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -168,19 +181,32 @@ const Wallet: React.FC = () => {
                     Withdraw
                   </CardTitle>
                   <CardDescription>
-                    Min: ${WALLET_LIMITS.MIN_WITHDRAW} | Max: ${WALLET_LIMITS.MAX_WITHDRAW}
+                    Min: R$ {WALLET_LIMITS.MIN_WITHDRAW} | Max: R$ {WALLET_LIMITS.MAX_WITHDRAW}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Input
-                    type="number"
-                    placeholder="Enter amount"
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                    min={WALLET_LIMITS.MIN_WITHDRAW}
-                    max={Math.min(WALLET_LIMITS.MAX_WITHDRAW, user?.balance || 0)}
-                    className="bg-input"
-                  />
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">Amount</label>
+                    <Input
+                      type="number"
+                      placeholder="Enter amount"
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                      min={WALLET_LIMITS.MIN_WITHDRAW}
+                      max={Math.min(WALLET_LIMITS.MAX_WITHDRAW, user?.balance || 0)}
+                      className="bg-input"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">PIX Key</label>
+                    <Input
+                      type="text"
+                      placeholder="CPF, Email, or Phone"
+                      value={pixKey}
+                      onChange={(e) => setPixKey(e.target.value)}
+                      className="bg-input"
+                    />
+                  </div>
                   <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
                     <DialogTrigger asChild>
                       <Button
@@ -194,16 +220,9 @@ const Wallet: React.FC = () => {
                       <DialogHeader>
                         <DialogTitle>Confirm Withdrawal</DialogTitle>
                         <DialogDescription>
-                          You are about to withdraw ${withdrawAmount}. This action cannot be undone.
+                          You are about to withdraw R$ {withdrawAmount} to PIX key: {pixKey}
                         </DialogDescription>
                       </DialogHeader>
-                      <Alert>
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          In production, withdrawal destination (PIX key, bank account) would be configured in your account settings
-                          and processed securely server-side. Never enter sensitive payment credentials in the client.
-                        </AlertDescription>
-                      </Alert>
                       <div className="flex gap-4">
                         <Button variant="outline" onClick={() => setShowWithdrawDialog(false)} className="flex-1">
                           Cancel
@@ -224,42 +243,34 @@ const Wallet: React.FC = () => {
                 <DialogHeader>
                   <DialogTitle>Complete Your Deposit</DialogTitle>
                   <DialogDescription>
-                    Transaction ID: {currentDepositTxid}
+                    Scan the QR code to complete your deposit
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
+                  <div className="bg-muted p-6 rounded-lg text-center">
+                    <div className="text-sm text-muted-foreground mb-3">PIX QR Code</div>
+                    <div className="w-48 h-48 bg-white mx-auto flex items-center justify-center rounded-lg border-4 border-primary">
+                      <div className="text-center p-4">
+                        <div className="text-xs text-black font-mono break-all">
+                          {currentDepositTxid?.slice(0, 32)}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-3">
+                      Amount: {formatBRL(parseFloat(depositAmount))}
+                    </p>
+                  </div>
                   <Alert>
-                    <AlertDescription>
-                      <strong>SIMULATED PAYMENT</strong><br/>
-                      In production, this would show:
-                      <ul className="list-disc list-inside mt-2">
-                        <li>QR code for PIX payment</li>
-                        <li>Payment gateway redirect link</li>
-                        <li>Bank transfer instructions</li>
-                      </ul>
+                    <AlertDescription className="text-xs">
+                      <strong>Demo Mode:</strong> This is a simulated QR code. In production, this would be a real PIX QR code.
                     </AlertDescription>
                   </Alert>
-                  <div className="bg-muted p-4 rounded-lg text-center">
-                    <div className="text-sm text-muted-foreground mb-2">Simulated Payment QR Code</div>
-                    <div className="w-48 h-48 bg-card border-2 border-border mx-auto flex items-center justify-center">
-                      <span className="text-xs text-muted-foreground">QR Code Placeholder</span>
-                    </div>
-                  </div>
                   <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      For testing purposes, use the button below to simulate payment confirmation:
-                    </p>
                     <Button
-                      onClick={() => {
-                        if (currentDepositTxid) {
-                          forceConfirmTransaction(currentDepositTxid);
-                          setShowDepositDialog(false);
-                        }
-                      }}
-                      className="w-full"
-                      variant="outline"
+                      onClick={handleConfirmDeposit}
+                      className="w-full glow-primary"
                     >
-                      🔧 Force Confirm (Test Only)
+                      Confirm Deposit
                     </Button>
                   </div>
                 </div>
@@ -300,7 +311,7 @@ const Wallet: React.FC = () => {
                       <div className={`text-lg font-bold ${
                         tx.type === 'deposit' || tx.type === 'win' ? 'text-success' : 'text-destructive'
                       }`}>
-                        {tx.type === 'deposit' || tx.type === 'win' ? '+' : '-'}${tx.amount.toFixed(2)}
+                        {tx.type === 'deposit' || tx.type === 'win' ? '+' : '-'}{formatBRL(tx.amount)}
                       </div>
                       <div className="text-sm text-muted-foreground capitalize">{tx.status}</div>
                       {tx.status === 'pending' && (
@@ -321,24 +332,16 @@ const Wallet: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Developer Notes */}
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Production Integration Notes</AlertTitle>
-          <AlertDescription>
-            <strong>This is a simulated wallet for demonstration.</strong> For production:
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Replace WalletAPI methods with real backend endpoints</li>
-              <li>Implement secure payment gateway integration (Stripe, PIX, etc.)</li>
-              <li>Store all sensitive data server-side with encryption</li>
-              <li>Add proper authentication and authorization</li>
-              <li>Implement webhook handlers for payment confirmations</li>
-              <li>Add KYC/AML compliance checks</li>
-              <li>Set up proper transaction monitoring and fraud detection</li>
-            </ul>
-          </AlertDescription>
-        </Alert>
       </div>
+
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        onClose={() => setShowReceiptModal(false)}
+        type={receiptData?.type}
+        amount={receiptData?.amount || 0}
+        txid={receiptData?.txid || ''}
+        pixKey={receiptData?.pixKey}
+      />
     </Layout>
   );
 };

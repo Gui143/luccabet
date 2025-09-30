@@ -8,42 +8,42 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 220 26% 8%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 220 20% 12%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 220 20% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 142 76% 45%;
-    --primary-foreground: 220 26% 8%;
+    --primary: 0 100% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 45 93% 58%;
-    --secondary-foreground: 220 26% 8%;
+    --secondary: 0 85% 35%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 15% 20%;
+    --muted: 0 0% 15%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 271 91% 65%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 0 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
 
     --success: 142 76% 45%;
-    --success-foreground: 220 26% 8%;
+    --success-foreground: 0 0% 0%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 18%;
-    --ring: 142 76% 45%;
+    --border: 0 0% 20%;
+    --input: 0 0% 12%;
+    --ring: 0 100% 45%;
 
     --radius: 0.75rem;
 
-    --glow-primary: 142 76% 45%;
-    --glow-secondary: 45 93% 58%;
-    --glow-accent: 271 91% 65%;
+    --glow-primary: 0 100% 45%;
+    --glow-secondary: 0 85% 35%;
+    --glow-accent: 0 100% 50%;
   }
 }
 
@@ -61,14 +61,28 @@ All colors MUST be HSL.
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .card-gradient {
-    background: linear-gradient(135deg, hsl(var(--card)), hsl(220 20% 14%));
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(0 0% 12%));
+  }
+
+  .plane-glow {
+    filter: drop-shadow(0 0 10px hsl(var(--primary)));
+    animation: plane-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes plane-pulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 10px hsl(var(--primary)));
+    }
+    50% {
+      filter: drop-shadow(0 0 20px hsl(var(--primary))) drop-shadow(0 0 30px hsl(var(--accent)));
+    }
   }
 
   .bet-card {
@@ -84,4 +98,17 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Hide Lovable.dev embeds and badge */
+a[href*="lovable.dev"],
+iframe[src*="lovable.dev"],
+div[style*="Edit with Lovable"],
+.lovable-badge {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  z-index: -9999 !important;
 }

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatBRL } from '@/lib/formatCurrency';
 
 const MyBets: React.FC = () => {
   const { getBetHistory } = useAuth();
@@ -33,7 +34,7 @@ const MyBets: React.FC = () => {
           <Card className="card-gradient border-border">
             <CardContent className="pt-6">
               <div className="text-sm text-muted-foreground mb-1">Total Wagered</div>
-              <div className="text-2xl font-bold text-secondary">${totalWagered.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-primary">{formatBRL(totalWagered)}</div>
             </CardContent>
           </Card>
 
@@ -50,7 +51,7 @@ const MyBets: React.FC = () => {
             <CardContent className="pt-6">
               <div className="text-sm text-muted-foreground mb-1">Total Profit/Loss</div>
               <div className={`text-2xl font-bold ${totalProfit >= 0 ? 'text-success' : 'text-destructive'}`}>
-                {totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}
+                {totalProfit >= 0 ? '+' : ''}{formatBRL(totalProfit)}
               </div>
             </CardContent>
           </Card>
@@ -86,7 +87,7 @@ const MyBets: React.FC = () => {
                     {bets.map((bet) => (
                       <TableRow key={bet.id}>
                         <TableCell className="font-medium">{bet.game}</TableCell>
-                        <TableCell>${bet.amount.toFixed(2)}</TableCell>
+                        <TableCell>{formatBRL(bet.amount)}</TableCell>
                         <TableCell>{bet.odds.toFixed(2)}x</TableCell>
                         <TableCell>
                           <div className={`flex items-center gap-1 ${bet.result === 'win' ? 'text-success' : 'text-destructive'}`}>
@@ -99,7 +100,7 @@ const MyBets: React.FC = () => {
                           </div>
                         </TableCell>
                         <TableCell className={bet.profit >= 0 ? 'text-success' : 'text-destructive'}>
-                          {bet.profit >= 0 ? '+' : ''}${bet.profit.toFixed(2)}
+                          {bet.profit >= 0 ? '+' : ''}{formatBRL(bet.profit)}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {new Date(bet.timestamp).toLocaleString()}

@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Gamepad2, ListOrdered, User, LogOut, Wallet } from 'lucide-react';
+import { Home, Gamepad2, ListOrdered, User, LogOut, Wallet, Instagram } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { formatBRLShort } from '@/lib/formatCurrency';
+import CEOPanel from '@/components/CEOPanel';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [showCEOPanel, setShowCEOPanel] = useState(false);
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'U') {
+        if (user?.email === 'prudencioguilherme7@gmail.com') {
+          e.preventDefault();
+          setShowCEOPanel(true);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [user]);
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
@@ -53,8 +70,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted border border-border">
-                <Wallet className="w-5 h-5 text-secondary" />
-                <span className="font-bold text-secondary">${user.balance.toFixed(2)}</span>
+                <Wallet className="w-5 h-5 text-primary" />
+                <span className="font-bold text-primary">{formatBRLShort(user.balance)}</span>
               </div>
               <Button onClick={logout} variant="outline" size="sm">
                 <LogOut className="w-4 h-4 mr-2" />
@@ -87,6 +104,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <main className="container mx-auto px-4 py-8">
         {children}
       </main>
+
+      <footer className="border-t border-border bg-card/50 backdrop-blur-sm mt-16">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              © 2024 7Reiv BET. Todos os direitos reservados.
+            </p>
+            <a 
+              href="https://instagram.com/7reivbet" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Instagram className="w-4 h-4" />
+              @7reivbet
+            </a>
+          </div>
+        </div>
+      </footer>
+
+      <CEOPanel isOpen={showCEOPanel} onClose={() => setShowCEOPanel(false)} />
     </div>
   );
 };

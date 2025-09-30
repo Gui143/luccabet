@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatBRLShort } from '@/lib/formatCurrency';
 import { toast } from 'sonner';
 
 type GamePhase = 'waiting' | 'countdown' | 'flying' | 'crashed';
@@ -134,7 +135,7 @@ const Aviator: React.FC = () => {
 
     updateBalance(-amount);
     setBetPlaced(true);
-    toast.success(`Bet placed: $${amount}`);
+    toast.success(`Bet placed: ${formatBRLShort(amount)}`);
     
     if (gamePhase === 'waiting') {
       startCountdown();
@@ -157,11 +158,11 @@ const Aviator: React.FC = () => {
       profit: winAmount - parseFloat(betAmount),
     });
     
-    toast.success(`✈️ Cashed out at ${currentMultiplier.toFixed(2)}x! Won $${winAmount.toFixed(2)}`);
+    toast.success(`✈️ Cashed out at ${currentMultiplier.toFixed(2)}x! Won ${formatBRLShort(winAmount)}`);
     setBetPlaced(false);
   };
 
-  // Draw canvas
+  // Draw canvas with improved airplane
   const drawCanvas = (multiplier: number, crash: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -172,12 +173,12 @@ const Aviator: React.FC = () => {
     const width = canvas.width;
     const height = canvas.height;
     
-    // Clear canvas
-    ctx.fillStyle = 'hsl(var(--card))';
+    // Clear canvas with black background
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, width, height);
     
-    // Draw grid
-    ctx.strokeStyle = 'hsl(var(--border))';
+    // Draw grid with red tint
+    ctx.strokeStyle = 'rgba(225, 6, 0, 0.2)';
     ctx.lineWidth = 1;
     for (let i = 0; i < 10; i++) {
       const y = (height / 10) * i;
@@ -187,11 +188,15 @@ const Aviator: React.FC = () => {
       ctx.stroke();
     }
     
-    // Draw curve
+    // Draw curve with glow
     const progress = Math.min(multiplier - 1, crash - 1) / (crash - 1);
     
-    ctx.strokeStyle = gamePhase === 'crashed' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))';
-    ctx.lineWidth = 3;
+    // Glow effect
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = gamePhase === 'crashed' ? 'rgba(225, 6, 0, 0.8)' : 'rgba(225, 6, 0, 0.6)';
+    
+    ctx.strokeStyle = gamePhase === 'crashed' ? '#e10600' : '#ff0000';
+    ctx.lineWidth = 4;
     ctx.beginPath();
     
     for (let i = 0; i <= progress * 100; i++) {
@@ -207,16 +212,60 @@ const Aviator: React.FC = () => {
     }
     ctx.stroke();
     
-    // Draw plane
+    // Draw airplane
     if (gamePhase === 'flying') {
       const planeX = (width * progress);
       const planeY = height - (height * 0.8 * Math.pow(progress, 1.5));
       
-      ctx.fillStyle = 'hsl(var(--primary))';
+      // Airplane shadow/glow
+      ctx.shadowBlur = 30;
+      ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
+      
+      // Draw airplane body (simplified)
+      ctx.save();
+      ctx.translate(planeX, planeY);
+      ctx.rotate(-Math.PI / 6); // Tilt upward
+      
+      // Fuselage
+      ctx.fillStyle = '#ff0000';
       ctx.beginPath();
-      ctx.arc(planeX, planeY, 8, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, 20, 8, 0, 0, Math.PI * 2);
       ctx.fill();
+      
+      // Wings
+      ctx.fillStyle = '#e10600';
+      ctx.beginPath();
+      ctx.moveTo(-10, 0);
+      ctx.lineTo(-25, 10);
+      ctx.lineTo(-15, 0);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(-10, 0);
+      ctx.lineTo(-25, -10);
+      ctx.lineTo(-15, 0);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Nose
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(15, 0, 4, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Particles trail
+      for (let i = 0; i < 5; i++) {
+        ctx.fillStyle = `rgba(255, 0, 0, ${0.5 - i * 0.1})`;
+        ctx.beginPath();
+        ctx.arc(-20 - i * 5, 0, 3 - i * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
     }
+    
+    ctx.shadowBlur = 0;
   };
 
   // Initial canvas setup
@@ -342,14 +391,14 @@ const Aviator: React.FC = () => {
               <span className="text-sm text-muted-foreground">Quick Bet:</span>
               {[10, 25, 50, 100].map(amount => (
                 <Button
-                  key={amount}
-                  onClick={() => setBetAmount(amount.toString())}
-                  variant="outline"
-                  size="sm"
-                  disabled={betPlaced || gamePhase === 'flying'}
-                >
-                  ${amount}
-                </Button>
+                        key={amount}
+                        onClick={() => setBetAmount(amount.toString())}
+                        variant="outline"
+                        size="sm"
+                        disabled={betPlaced || gamePhase === 'flying'}
+                      >
+                        R$ {amount}
+                      </Button>
               ))}
             </div>
           </CardContent>

@@ -9,7 +9,7 @@ interface WalletContextType {
   isLoading: boolean;
   createDeposit: (amount: number) => Promise<{ txid: string; paymentUrl: string; qrCode?: string }>;
   confirmDeposit: (txid: string) => Promise<void>;
-  createWithdraw: (amount: number) => Promise<void>;
+  createWithdraw: (amount: number) => Promise<{ txid: string }>;
   forceConfirmTransaction: (txid: string) => Promise<void>;
   refreshTransactions: () => Promise<void>;
 }
@@ -195,6 +195,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }, 5000);
       
+      return result;
     } catch (error) {
       toast.error('Failed to create withdrawal');
       throw error;

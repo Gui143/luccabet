@@ -53,7 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: Date.now().toString(),
       email,
       username,
-      balance: 1000, // Starting balance
+      balance: 0, // Starting balance R$ 0.00
     };
 
     const userWithPassword = { ...newUser, password };
