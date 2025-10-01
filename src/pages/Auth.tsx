@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,15 +21,21 @@ const Auth: React.FC = () => {
     }
   }, [user, navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (isLogin) {
-      if (login(email, password)) {
+      const success = await login(email, password);
+      if (success) {
         navigate('/');
       }
     } else {
-      if (signup(email, password, username)) {
+      if (!username || username.length < 3) {
+        toast.error('Username must be at least 3 characters');
+        return;
+      }
+      const success = await signup(email, password, username);
+      if (success) {
         navigate('/');
       }
     }

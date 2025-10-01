@@ -3,6 +3,10 @@ import { X, TrendingUp, Users, DollarSign, Activity } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface CEOPanelProps {
   isOpen: boolean;
@@ -12,7 +16,10 @@ interface CEOPanelProps {
 const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
+  const [username, setUsername] = useState('');
+  const [creditAmount, setCreditAmount] = useState('');
+  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+  const [isCrediting, setIsCrediting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -24,6 +31,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
           if (prev >= 100) {
             clearInterval(interval);
             setLoading(false);
+            loadOnlineUsers();
             return 100;
           }
           return prev + 2;
@@ -33,6 +41,50 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       return () => clearInterval(interval);
     }
   }, [isOpen]);
+
+  const loadOnlineUsers = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('username, email, balance, is_online, last_seen')
+      .eq('is_online', true)
+      .order('last_seen', { ascending: false });
+
+    if (!error && data) {
+      setOnlineUsers(data);
+    }
+  };
+
+  const handleCreditUser = async () => {
+    if (!username.trim() || !creditAmount) {
+      toast.error('Please enter username and amount');
+      return;
+    }
+
+    const amount = parseFloat(creditAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+
+    setIsCrediting(true);
+    
+    const { data, error } = await supabase.functions.invoke('credit-user', {
+      body: { username: username.trim(), amount }
+    });
+
+    if (error) {
+      toast.error(error.message || 'Failed to credit user');
+    } else if (data?.error) {
+      toast.error(data.error);
+    } else {
+      toast.success(`Credited R$ ${amount.toFixed(2)} to ${username}`);
+      setUsername('');
+      setCreditAmount('');
+      loadOnlineUsers();
+    }
+
+    setIsCrediting(false);
+  };
 
   if (!isOpen) return null;
 
@@ -121,58 +173,94 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <Card className="border-border">
             <CardHeader>
-              <CardTitle>Recent Transactions</CardTitle>
+              <CardTitle>Credit User Balance</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div>
-                      <p className="font-medium">Transaction #{1000 + i}</p>
-                      <p className="text-xs text-muted-foreground">User ID: {i}42857</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-primary">R$ {(Math.random() * 500 + 50).toFixed(2)}</p>
-                      <p className="text-xs text-muted-foreground">Deposit</p>
-                    </div>
-                  </div>
-                ))}
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter username"
+                  className="mt-2"
+                />
               </div>
+              <div>
+                <Label htmlFor="amount">Amount (R$)</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  value={creditAmount}
+                  onChange={(e) => setCreditAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className="mt-2"
+                  step="0.01"
+                />
+              </div>
+              <Button
+                onClick={handleCreditUser}
+                disabled={isCrediting}
+                className="w-full glow-primary"
+              >
+                {isCrediting ? 'Processing...' : 'Credit User'}
+              </Button>
             </CardContent>
           </Card>
 
           <Card className="border-border">
             <CardHeader>
-              <CardTitle>System Controls</CardTitle>
+              <CardTitle>Online Users ({onlineUsers.length})</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Button className="w-full justify-start" variant="outline">
-                <Users className="mr-2 h-4 w-4" />
-                User Management
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Activity className="mr-2 h-4 w-4" />
-                Live Activity Monitor
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Analytics Dashboard
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <DollarSign className="mr-2 h-4 w-4" />
-                Financial Reports
-              </Button>
-              <div className="pt-4 border-t border-border">
-                <Button className="w-full" variant="destructive">
-                  🔧 Maintenance Mode
-                </Button>
+            <CardContent>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {onlineUsers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No users online</p>
+                ) : (
+                  onlineUsers.map((user, i) => (
+                    <div key={i} className="flex items-center justify-between p-2 bg-muted rounded">
+                      <div>
+                        <p className="font-medium text-sm">{user.username}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-primary">R$ {parseFloat(user.balance).toFixed(2)}</p>
+                        <span className="text-xs text-green-500">● Online</span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
+
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle>System Controls</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button className="w-full justify-start" variant="outline">
+              <Users className="mr-2 h-4 w-4" />
+              Users
+            </Button>
+            <Button className="w-full justify-start" variant="outline">
+              <Activity className="mr-2 h-4 w-4" />
+              Activity
+            </Button>
+            <Button className="w-full justify-start" variant="outline">
+              <TrendingUp className="mr-2 h-4 w-4" />
+              Analytics
+            </Button>
+            <Button className="w-full justify-start" variant="outline">
+              <DollarSign className="mr-2 h-4 w-4" />
+              Reports
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

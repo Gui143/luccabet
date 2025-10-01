@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   id: string;
@@ -21,85 +22,174 @@ interface Bet {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => boolean;
-  signup: (email: string, password: string, username: string) => boolean;
-  logout: () => void;
-  updateBalance: (amount: number) => void;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string, username: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  updateBalance: (amount: number) => Promise<void>;
   addBet: (bet: Omit<Bet, 'id' | 'userId' | 'timestamp'>) => void;
   getBetHistory: () => Bet[];
+  isCEO: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isCEO, setIsCEO] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    // Check active session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+        
+        // Update online status
+        supabase
+          .from('profiles')
+          .update({ is_online: true, last_seen: new Date().toISOString() })
+          .eq('id', session.user.id)
+          .then();
+      } else {
+        setUser(null);
+        setIsCEO(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const signup = (email: string, password: string, username: string): boolean => {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    
-    if (users.find((u: any) => u.email === email)) {
-      toast.error('Email already registered');
-      return false;
+  // Update online status every 30 seconds
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(async () => {
+      await supabase
+        .from('profiles')
+        .update({ is_online: true, last_seen: new Date().toISOString() })
+        .eq('id', user.id);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const loadUserProfile = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (profile) {
+      setUser({
+        id: profile.id,
+        email: profile.email,
+        username: profile.username,
+        balance: typeof profile.balance === 'string' ? parseFloat(profile.balance) : profile.balance
+      });
+
+      // Check if CEO
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      const isAdmin = roles?.some(r => r.role === 'ceo');
+      setIsCEO(!!isAdmin);
     }
-
-    const newUser: User = {
-      id: Date.now().toString(),
-      email,
-      username,
-      balance: 0, // Starting balance R$ 0.00
-    };
-
-    const userWithPassword = { ...newUser, password };
-    users.push(userWithPassword);
-    localStorage.setItem('users', JSON.stringify(users));
-    localStorage.setItem('currentUser', JSON.stringify(newUser));
-    setUser(newUser);
-    toast.success('Account created successfully!');
-    return true;
   };
 
-  const login = (email: string, password: string): boolean => {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const userWithPassword = users.find((u: any) => u.email === email && u.password === password);
+  const signup = async (email: string, password: string, username: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username },
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
 
-    if (!userWithPassword) {
-      toast.error('Invalid email or password');
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+
+      if (data.user) {
+        toast.success('Account created successfully!');
+        // Check if CEO email
+        if (email === 'prudencioguilherme7@gmail.com') {
+          await supabase
+            .from('user_roles')
+            .insert({ user_id: data.user.id, role: 'ceo' as any });
+        }
+        return true;
+      }
+
+      return false;
+    } catch (error: any) {
+      toast.error(error.message || 'Signup failed');
       return false;
     }
-
-    const { password: _, ...userWithoutPassword } = userWithPassword;
-    localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-    setUser(userWithoutPassword);
-    toast.success('Welcome back!');
-    return true;
   };
 
-  const logout = () => {
-    localStorage.removeItem('currentUser');
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        toast.error('Invalid email or password');
+        return false;
+      }
+
+      if (data.user) {
+        toast.success('Welcome back!');
+        return true;
+      }
+
+      return false;
+    } catch (error: any) {
+      toast.error(error.message || 'Login failed');
+      return false;
+    }
+  };
+
+  const logout = async () => {
+    if (user) {
+      // Set offline before logout
+      await supabase
+        .from('profiles')
+        .update({ is_online: false, last_seen: new Date().toISOString() })
+        .eq('id', user.id);
+    }
+
+    await supabase.auth.signOut();
     setUser(null);
+    setIsCEO(false);
     toast.success('Logged out successfully');
   };
 
-  const updateBalance = (amount: number) => {
+  const updateBalance = async (amount: number) => {
     if (!user) return;
 
-    const updatedUser = { ...user, balance: user.balance + amount };
-    setUser(updatedUser);
-    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    const newBalance = user.balance + amount;
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ balance: newBalance })
+      .eq('id', user.id);
 
-    // Update in users array
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const userIndex = users.findIndex((u: any) => u.id === user.id);
-    if (userIndex !== -1) {
-      users[userIndex] = { ...users[userIndex], balance: updatedUser.balance };
-      localStorage.setItem('users', JSON.stringify(users));
+    if (!error) {
+      setUser({ ...user, balance: newBalance });
     }
   };
 
@@ -125,7 +215,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, updateBalance, addBet, getBetHistory }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      signup, 
+      logout, 
+      updateBalance, 
+      addBet, 
+      getBetHistory,
+      isCEO 
+    }}>
       {children}
     </AuthContext.Provider>
   );

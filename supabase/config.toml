@@ -1,1 +1,4 @@
 project_id = "wjxskortepwwxdkpufzq"
+
+[functions.credit-user]
+verify_jwt = true

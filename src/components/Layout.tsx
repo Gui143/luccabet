@@ -5,16 +5,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { formatBRLShort } from '@/lib/formatCurrency';
 import CEOPanel from '@/components/CEOPanel';
+import GlobalChat from '@/components/GlobalChat';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isCEO } = useAuth();
   const [showCEOPanel, setShowCEOPanel] = useState(false);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'U') {
-        if (user?.email === 'prudencioguilherme7@gmail.com') {
+        if (isCEO) {
           e.preventDefault();
           setShowCEOPanel(true);
         }
@@ -23,7 +24,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [user]);
+  }, [isCEO]);
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
@@ -124,6 +125,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
       </footer>
 
+      <GlobalChat />
       <CEOPanel isOpen={showCEOPanel} onClose={() => setShowCEOPanel(false)} />
     </div>
   );

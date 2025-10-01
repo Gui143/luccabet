@@ -146,7 +146,8 @@ const CrashDuplo: React.FC = () => {
     setRightGame(prev => ({ ...prev, phase: 'running', crashPoint: rightCrash, multiplier: 1.00 }));
     
     const startTime = Date.now();
-    const duration = 10000;
+    const maxCrash = Math.max(leftCrash, rightCrash);
+    const duration = Math.min(5000, maxCrash * 2000); // Faster: 2-5 seconds max
     
     const animate = () => {
       const elapsed = Date.now() - startTime;

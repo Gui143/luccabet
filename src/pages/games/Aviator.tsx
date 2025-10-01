@@ -58,7 +58,7 @@ const Aviator: React.FC = () => {
     setCurrentMultiplier(1.00);
     
     const startTime = Date.now();
-    const duration = 10000; // Max 10 seconds to reach crash point
+    const duration = Math.min(5000, crash * 2000); // Faster: 2-5 seconds max
     
     const animate = () => {
       const elapsed = Date.now() - startTime;
