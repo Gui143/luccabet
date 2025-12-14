@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      cbfd_games: {
+        Row: {
+          championship: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          odd: number
+          team_a: string
+          team_b: string
+        }
+        Insert: {
+          championship: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          odd?: number
+          team_a: string
+          team_b: string
+        }
+        Update: {
+          championship?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          odd?: number
+          team_a?: string
+          team_b?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string
