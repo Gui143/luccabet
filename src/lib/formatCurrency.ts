@@ -1,15 +1,19 @@
-export const formatBRL = (amount: number): string => {
+export const formatEUR = (amount: number): string => {
   return amount.toLocaleString('pt-BR', {
     style: 'currency',
-    currency: 'BRL',
+    currency: 'EUR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 };
 
-export const formatBRLShort = (amount: number): string => {
-  return `R$ ${amount.toLocaleString('pt-BR', {
+export const formatEURShort = (amount: number): string => {
+  return `€ ${amount.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 };
+
+// Aliases for backward compatibility
+export const formatBRL = formatEUR;
+export const formatBRLShort = formatEURShort;

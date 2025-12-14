@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Gamepad2, ListOrdered, User, LogOut, Wallet, Instagram } from 'lucide-react';
+import { Home, Gamepad2, ListOrdered, User, LogOut, Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { formatBRLShort } from '@/lib/formatCurrency';
@@ -45,9 +45,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center glow-primary">
-                <span className="text-xl font-bold text-primary-foreground">7R</span>
+                <span className="text-xl font-bold text-primary-foreground">LB</span>
               </div>
-              <h1 className="text-2xl font-bold text-gradient">7Reiv BET</h1>
+              <h1 className="text-2xl font-bold text-gradient">LUCCABET</h1>
             </Link>
 
             <nav className="hidden md:flex items-center gap-6">
@@ -110,17 +110,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2024 7Reiv BET. Todos os direitos reservados.
+              © 2024 LUCCABET. Plataforma 100% simulada. Moeda fictícia.
             </p>
-            <a 
-              href="https://instagram.com/7reivbet" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              <Instagram className="w-4 h-4" />
-              @7reivbet
-            </a>
           </div>
         </div>
       </footer>
