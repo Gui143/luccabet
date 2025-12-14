@@ -47,11 +47,11 @@ const Auth: React.FC = () => {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center glow-primary">
-              <span className="text-2xl font-bold text-primary-foreground">7R</span>
+              <span className="text-2xl font-bold text-primary-foreground">LB</span>
             </div>
-            <h1 className="text-3xl font-bold text-gradient">7Reiv BET</h1>
+            <h1 className="text-3xl font-bold text-gradient">LUCCABET</h1>
           </div>
-          <p className="text-muted-foreground">Your premium betting destination</p>
+          <p className="text-muted-foreground">Plataforma 100% simulada</p>
         </div>
 
         <Card className="card-gradient border-border">
