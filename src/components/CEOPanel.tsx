@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, TrendingUp, Users, DollarSign, Activity, Plus, Trash2, Edit, Trophy, Shield, Calendar } from 'lucide-react';
+import { X, TrendingUp, Users, DollarSign, Activity, Plus, Trash2, Edit, Trophy, Shield, Calendar, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -23,6 +24,8 @@ interface CBFDGame {
   championship: string;
   is_active: boolean;
   match_date: string | null;
+  winner_team: string | null;
+  settled_at: string | null;
 }
 
 interface CBFDTeam {
@@ -61,6 +64,14 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
   const [isAddingTeam, setIsAddingTeam] = useState(false);
   const [isAddingChampionship, setIsAddingChampionship] = useState(false);
   const [isAddingGame, setIsAddingGame] = useState(false);
+
+  // Settlement
+  const [showSettleDialog, setShowSettleDialog] = useState(false);
+  const [settlingGame, setSettlingGame] = useState<CBFDGame | null>(null);
+  const [winnerTeam, setWinnerTeam] = useState('');
+  const [scoreA, setScoreA] = useState('');
+  const [scoreB, setScoreB] = useState('');
+  const [isSettling, setIsSettling] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -298,6 +309,42 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const openSettleDialog = (game: CBFDGame) => {
+    setSettlingGame(game);
+    setWinnerTeam('');
+    setScoreA('');
+    setScoreB('');
+    setShowSettleDialog(true);
+  };
+
+  const handleSettleMatch = async () => {
+    if (!settlingGame || !winnerTeam) {
+      toast.error('Selecione o vencedor');
+      return;
+    }
+
+    setIsSettling(true);
+    const { data, error } = await supabase.functions.invoke('settle-match', {
+      body: {
+        game_id: settlingGame.id,
+        winner_team: winnerTeam,
+        score_a: scoreA ? parseInt(scoreA) : null,
+        score_b: scoreB ? parseInt(scoreB) : null
+      }
+    });
+
+    if (error) {
+      toast.error(error.message || 'Erro ao encerrar');
+    } else if (data?.error) {
+      toast.error(data.error);
+    } else {
+      toast.success(`Encerrada! ${data.winners} vencedoras, ${data.losers} perdedoras.`);
+      setShowSettleDialog(false);
+      loadCBFDGames();
+    }
+    setIsSettling(false);
+  };
+
   if (!isOpen) return null;
 
   if (loading) {
@@ -472,9 +519,21 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                             <p className="font-medium text-sm truncate">{game.team_a} vs {game.team_b}</p>
                             <p className="text-xs text-muted-foreground truncate">
                               {game.championship} • Odd: {Number(game.odd).toFixed(2)}x
-                              {game.match_date && ` • ${new Date(game.match_date).toLocaleDateString('pt-BR')} ${new Date(game.match_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
+                              {game.match_date && ` • ${new Date(game.match_date).toLocaleDateString('pt-BR')}`}
                             </p>
                           </div>
+                          {game.settled_at ? (
+                            <span className="text-xs px-2 py-1 bg-muted rounded shrink-0">Encerrada</span>
+                          ) : (
+                            <div className="flex gap-1 shrink-0">
+                              <Button variant="outline" size="icon" onClick={() => openSettleDialog(game)} className="h-8 w-8">
+                                <CheckCircle className="h-4 w-4 text-success" />
+                              </Button>
+                              <Button variant="destructive" size="icon" onClick={() => handleDeleteGame(game.id)} className="h-8 w-8">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
                           <Button variant="destructive" size="icon" onClick={() => handleDeleteGame(game.id)} className="h-8 w-8 shrink-0">
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -623,6 +682,41 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Settlement Dialog */}
+        <Dialog open={showSettleDialog} onOpenChange={setShowSettleDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Encerrar Partida</DialogTitle>
+              <DialogDescription>{settlingGame?.team_a} vs {settlingGame?.team_b}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <div>
+                <Label>Vencedor</Label>
+                <Select value={winnerTeam} onValueChange={setWinnerTeam}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={settlingGame?.team_a || ''}>{settlingGame?.team_a}</SelectItem>
+                    <SelectItem value={settlingGame?.team_b || ''}>{settlingGame?.team_b}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Placar {settlingGame?.team_a}</Label>
+                  <Input type="number" value={scoreA} onChange={(e) => setScoreA(e.target.value)} placeholder="0" min="0" className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs">Placar {settlingGame?.team_b}</Label>
+                  <Input type="number" value={scoreB} onChange={(e) => setScoreB(e.target.value)} placeholder="0" min="0" className="mt-1" />
+                </div>
+              </div>
+              <Button onClick={handleSettleMatch} disabled={isSettling || !winnerTeam} className="w-full glow-primary">
+                {isSettling ? 'Processando...' : 'Confirmar Resultado'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

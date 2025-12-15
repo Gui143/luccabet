@@ -1,21 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Gamepad2, ListOrdered, User, LogOut, Wallet } from 'lucide-react';
+import { Home, Gamepad2, ListOrdered, User, LogOut, Wallet, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { formatBRLShort } from '@/lib/formatCurrency';
 import CEOPanel from '@/components/CEOPanel';
 import GlobalChat from '@/components/GlobalChat';
+import MobileAdminPanel from '@/components/MobileAdminPanel';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { user, logout, isCEO } = useAuth();
   const [showCEOPanel, setShowCEOPanel] = useState(false);
+  const [showMobileAdmin, setShowMobileAdmin] = useState(false);
+  const isMobile = useIsMobile();
+
+  // Check if user is the specific CEO
+  const isAdminEmail = user?.email === 'prudencioguilherme7@gmail.com';
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'U') {
-        if (isCEO) {
+      // CTRL + ALT + U - Admin shortcut (desktop only)
+      if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'u') {
+        if (isCEO && !isMobile) {
           e.preventDefault();
           setShowCEOPanel(true);
         }
@@ -24,8 +32,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isCEO]);
+  }, [isCEO, isMobile]);
 
+  // Base nav items
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/games', label: 'Games', icon: Gamepad2 },
@@ -36,6 +45,33 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (!user) {
     return <>{children}</>;
+  }
+
+  // If showing mobile admin panel
+  if (showMobileAdmin && isMobile && isAdminEmail) {
+    return (
+      <div className="min-h-screen bg-background w-full overflow-x-hidden">
+        <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+          <div className="w-full max-w-7xl mx-auto px-3 py-3">
+            <div className="flex items-center justify-between gap-2">
+              <button onClick={() => setShowMobileAdmin(false)} className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                  <span className="text-base font-bold text-primary-foreground">LB</span>
+                </div>
+                <span className="text-lg font-bold text-gradient">LUCCABET</span>
+              </button>
+              <Button onClick={() => setShowMobileAdmin(false)} variant="outline" size="sm">
+                Voltar
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        <main className="w-full max-w-7xl mx-auto px-3 py-4">
+          <MobileAdminPanel />
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -81,6 +117,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </div>
           </div>
 
+          {/* Mobile Navigation */}
           <nav className="md:hidden flex items-center justify-around mt-3 pt-3 border-t border-border -mx-3 px-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -98,6 +135,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </Link>
               );
             })}
+
+            {/* Mobile Admin Button - Only visible on mobile for specific admin */}
+            {isMobile && isAdminEmail && (
+              <button
+                onClick={() => setShowMobileAdmin(true)}
+                className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors text-secondary"
+              >
+                <Settings className="w-5 h-5" />
+                <span className="text-[10px] sm:text-xs">Admin</span>
+              </button>
+            )}
           </nav>
         </div>
       </header>

@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      cbfd_bets: {
+        Row: {
+          amount: number
+          created_at: string
+          game_id: string
+          id: string
+          odd: number
+          potential_win: number
+          selected_team: string
+          status: Database["public"]["Enums"]["cbfd_bet_status"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          game_id: string
+          id?: string
+          odd: number
+          potential_win: number
+          selected_team: string
+          status?: Database["public"]["Enums"]["cbfd_bet_status"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          game_id?: string
+          id?: string
+          odd?: number
+          potential_win?: number
+          selected_team?: string
+          status?: Database["public"]["Enums"]["cbfd_bet_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cbfd_bets_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "cbfd_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cbfd_bets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cbfd_championships: {
         Row: {
           created_at: string
@@ -44,8 +95,12 @@ export type Database = {
           is_active: boolean
           match_date: string | null
           odd: number
+          score_a: number | null
+          score_b: number | null
+          settled_at: string | null
           team_a: string
           team_b: string
+          winner_team: string | null
         }
         Insert: {
           championship: string
@@ -55,8 +110,12 @@ export type Database = {
           is_active?: boolean
           match_date?: string | null
           odd?: number
+          score_a?: number | null
+          score_b?: number | null
+          settled_at?: string | null
           team_a: string
           team_b: string
+          winner_team?: string | null
         }
         Update: {
           championship?: string
@@ -66,8 +125,12 @@ export type Database = {
           is_active?: boolean
           match_date?: string | null
           odd?: number
+          score_a?: number | null
+          score_b?: number | null
+          settled_at?: string | null
           team_a?: string
           team_b?: string
+          winner_team?: string | null
         }
         Relationships: []
       }
@@ -195,6 +258,7 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "ceo"
+      cbfd_bet_status: "open" | "won" | "lost"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -323,6 +387,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "ceo"],
+      cbfd_bet_status: ["open", "won", "lost"],
     },
   },
 } as const
