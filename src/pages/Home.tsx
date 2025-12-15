@@ -1,39 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { Gamepad2, TrendingUp, Zap, Trophy } from 'lucide-react';
+import { Gamepad2, Zap, Trophy, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
-import { supabase } from '@/integrations/supabase/client';
-import { formatEURShort } from '@/lib/formatCurrency';
-
-interface CBFDGame {
-  id: string;
-  team_a: string;
-  team_b: string;
-  odd: number;
-  championship: string;
-}
+import CBFDBetting from '@/components/CBFDBetting';
 
 const Home: React.FC = () => {
-  const [cbfdGames, setCbfdGames] = useState<CBFDGame[]>([]);
-
-  useEffect(() => {
-    loadCBFDGames();
-  }, []);
-
-  const loadCBFDGames = async () => {
-    const { data, error } = await supabase
-      .from('cbfd_games')
-      .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      setCbfdGames(data);
-    }
-  };
-
   const gameCategories = [
     {
       title: 'Mines',
@@ -83,42 +56,8 @@ const Home: React.FC = () => {
           <div className="absolute bottom-0 left-0 w-32 sm:w-64 h-32 sm:h-64 bg-secondary/20 rounded-full blur-3xl"></div>
         </div>
 
-        {/* Jogos de Hoje CBFD */}
-        {cbfdGames.length > 0 && (
-          <div>
-            <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-secondary" />
-              Jogos de Hoje CBFD
-            </h3>
-            <div className="grid gap-3 sm:gap-4">
-              {cbfdGames.map((game) => (
-                <Card key={game.id} className="bet-card overflow-hidden">
-                  <CardContent className="p-3 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span className="w-2 h-2 bg-success rounded-full animate-pulse shrink-0"></span>
-                          <span className="text-xs sm:text-sm text-success font-medium">AO VIVO</span>
-                          <span className="text-xs text-muted-foreground truncate">• {game.championship}</span>
-                        </div>
-                        <div className="font-semibold text-sm sm:text-base truncate">
-                          {game.team_a} <span className="text-muted-foreground">vs</span> {game.team_b}
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
-                        <div className="text-center">
-                          <div className="text-xl sm:text-2xl font-bold text-secondary">{Number(game.odd).toFixed(2)}x</div>
-                          <div className="text-xs text-muted-foreground">Odd</div>
-                        </div>
-                        <Button className="glow-primary h-9 sm:h-10 text-sm">Apostar</Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* CBFD Sports Betting Section */}
+        <CBFDBetting />
 
         {/* Casino Games */}
         <div>

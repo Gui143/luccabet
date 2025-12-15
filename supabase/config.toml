@@ -2,3 +2,6 @@ project_id = "wjxskortepwwxdkpufzq"
 
 [functions.credit-user]
 verify_jwt = true
+
+[functions.settle-match]
+verify_jwt = true
