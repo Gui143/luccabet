@@ -60,56 +60,58 @@ const Home: React.FC = () => {
 
   return (
     <Layout>
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {/* Hero Section - APOSTE NA CBFD */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-card via-card to-muted border border-border p-8 md:p-12">
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-card via-card to-muted border border-border p-4 sm:p-8 md:p-12">
           <div className="relative z-10">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4">
               <span className="text-gradient">APOSTE NA CBFD</span>
             </h2>
-            <p className="text-muted-foreground text-lg mb-6 max-w-xl">
+            <p className="text-muted-foreground text-sm sm:text-lg mb-4 sm:mb-6 max-w-xl">
               Plataforma 100% simulada com euros fictícios. Aposte nos jogos da CBFD!
             </p>
-            <div className="flex gap-4">
-              <Button asChild size="lg" className="glow-primary">
+            <div className="flex gap-3 sm:gap-4">
+              <Button asChild size="default" className="glow-primary text-sm sm:text-base h-10 sm:h-11">
                 <Link to="/games">
-                  <Gamepad2 className="mr-2 h-5 w-5" />
+                  <Gamepad2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                   Jogar Agora
                 </Link>
               </Button>
             </div>
           </div>
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/20 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 bg-primary/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-32 sm:w-64 h-32 sm:h-64 bg-secondary/20 rounded-full blur-3xl"></div>
         </div>
 
         {/* Jogos de Hoje CBFD */}
         {cbfdGames.length > 0 && (
           <div>
-            <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-secondary" />
+            <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-secondary" />
               Jogos de Hoje CBFD
             </h3>
-            <div className="grid gap-4">
+            <div className="grid gap-3 sm:gap-4">
               {cbfdGames.map((game) => (
-                <Card key={game.id} className="bet-card">
-                  <CardContent className="flex items-center justify-between p-6">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
-                        <span className="text-sm text-success font-medium">AO VIVO</span>
-                        <span className="text-xs text-muted-foreground">• {game.championship}</span>
+                <Card key={game.id} className="bet-card overflow-hidden">
+                  <CardContent className="p-3 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className="w-2 h-2 bg-success rounded-full animate-pulse shrink-0"></span>
+                          <span className="text-xs sm:text-sm text-success font-medium">AO VIVO</span>
+                          <span className="text-xs text-muted-foreground truncate">• {game.championship}</span>
+                        </div>
+                        <div className="font-semibold text-sm sm:text-base truncate">
+                          {game.team_a} <span className="text-muted-foreground">vs</span> {game.team_b}
+                        </div>
                       </div>
-                      <div className="font-semibold">
-                        {game.team_a} <span className="text-muted-foreground">vs</span> {game.team_b}
+                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                        <div className="text-center">
+                          <div className="text-xl sm:text-2xl font-bold text-secondary">{Number(game.odd).toFixed(2)}x</div>
+                          <div className="text-xs text-muted-foreground">Odd</div>
+                        </div>
+                        <Button className="glow-primary h-9 sm:h-10 text-sm">Apostar</Button>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-secondary">{Number(game.odd).toFixed(2)}x</div>
-                        <div className="text-xs text-muted-foreground">Odd</div>
-                      </div>
-                      <Button className="glow-primary">Apostar</Button>
                     </div>
                   </CardContent>
                 </Card>
