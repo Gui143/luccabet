@@ -34,6 +34,9 @@ const Home: React.FC = () => {
   return (
     <Layout>
       <div className="space-y-6 sm:space-y-8">
+        {/* APOSTE EM TIMES DA CBFD - Main Section at TOP */}
+        <CBFDBetting />
+
         {/* Hero Section - APOSTE NA CBFD */}
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-card via-card to-muted border border-border p-4 sm:p-8 md:p-12">
           <div className="relative z-10">
@@ -55,9 +58,6 @@ const Home: React.FC = () => {
           <div className="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 bg-primary/20 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-32 sm:w-64 h-32 sm:h-64 bg-secondary/20 rounded-full blur-3xl"></div>
         </div>
-
-        {/* CBFD Sports Betting Section */}
-        <CBFDBetting />
 
         {/* Casino Games */}
         <div>

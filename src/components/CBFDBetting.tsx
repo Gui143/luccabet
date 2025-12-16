@@ -148,7 +148,7 @@ const CBFDBetting: React.FC = () => {
     <div className="space-y-4">
       <h3 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
         <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-secondary" />
-        APOSTAS ESPORTIVAS CBFD
+        APOSTE EM TIMES DA CBFD
       </h3>
 
       <div className="grid gap-3 sm:gap-4">

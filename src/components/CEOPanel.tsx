@@ -193,7 +193,14 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       .insert({ name: newTeamName.trim() });
 
     if (error) {
-      toast.error('Erro ao adicionar time');
+      console.error('Error adding team:', error);
+      if (error.code === '23505') {
+        toast.error('Time já existe com esse nome');
+      } else if (error.code === '42501') {
+        toast.error('Sem permissão. Verifique se você tem role CEO.');
+      } else {
+        toast.error(`Erro: ${error.message}`);
+      }
     } else {
       toast.success('Time adicionado!');
       setNewTeamName('');
@@ -225,7 +232,14 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       .insert({ name: newChampionshipName.trim() });
 
     if (error) {
-      toast.error('Erro ao adicionar campeonato');
+      console.error('Error adding championship:', error);
+      if (error.code === '23505') {
+        toast.error('Campeonato já existe com esse nome');
+      } else if (error.code === '42501') {
+        toast.error('Sem permissão. Verifique se você tem role CEO.');
+      } else {
+        toast.error(`Erro: ${error.message}`);
+      }
     } else {
       toast.success('Campeonato adicionado!');
       setNewChampionshipName('');
@@ -285,7 +299,12 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       });
 
     if (error) {
-      toast.error('Erro ao adicionar partida');
+      console.error('Error adding game:', error);
+      if (error.code === '42501') {
+        toast.error('Sem permissão. Verifique se você tem role CEO.');
+      } else {
+        toast.error(`Erro: ${error.message}`);
+      }
     } else {
       toast.success('Partida CBFD adicionada!');
       setSelectedTeamA('');
