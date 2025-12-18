@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, TrendingUp, Users, DollarSign, Activity, Plus, Trash2, Edit, Trophy, Shield, Calendar, CheckCircle } from 'lucide-react';
+import { X, Users, DollarSign, Plus, Trash2, Trophy, Shield, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -21,6 +21,9 @@ interface CBFDGame {
   team_a: string;
   team_b: string;
   odd: number;
+  odd_a: number;
+  odd_draw: number;
+  odd_b: number;
   championship: string;
   is_active: boolean;
   match_date: string | null;
@@ -57,7 +60,9 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
   const [selectedTeamA, setSelectedTeamA] = useState('');
   const [selectedTeamB, setSelectedTeamB] = useState('');
   const [selectedChampionship, setSelectedChampionship] = useState('');
-  const [newOdd, setNewOdd] = useState('');
+  const [oddA, setOddA] = useState('2.00');
+  const [oddDraw, setOddDraw] = useState('3.00');
+  const [oddB, setOddB] = useState('2.00');
   const [matchDate, setMatchDate] = useState('');
   const [matchTime, setMatchTime] = useState('');
   
@@ -122,7 +127,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      setCbfdGames(data);
+      setCbfdGames(data as CBFDGame[]);
     }
   };
 
@@ -260,7 +265,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
 
   // CBFD Games handlers
   const handleAddGame = async () => {
-    if (!selectedTeamA || !selectedTeamB || !newOdd || !selectedChampionship) {
+    if (!selectedTeamA || !selectedTeamB || !selectedChampionship) {
       toast.error('Preencha todos os campos');
       return;
     }
@@ -270,9 +275,12 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       return;
     }
 
-    const odd = parseFloat(newOdd);
-    if (isNaN(odd) || odd < 1) {
-      toast.error('Digite uma odd válida (mínimo 1.00)');
+    const oddAVal = parseFloat(oddA);
+    const oddDrawVal = parseFloat(oddDraw);
+    const oddBVal = parseFloat(oddB);
+
+    if (isNaN(oddAVal) || oddAVal < 1 || isNaN(oddDrawVal) || oddDrawVal < 1 || isNaN(oddBVal) || oddBVal < 1) {
+      toast.error('Digite odds válidas (mínimo 1.00)');
       return;
     }
 
@@ -293,7 +301,10 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       .insert({
         team_a: teamA,
         team_b: teamB,
-        odd: odd,
+        odd: oddAVal,
+        odd_a: oddAVal,
+        odd_draw: oddDrawVal,
+        odd_b: oddBVal,
         championship: championship,
         match_date: matchDateTime
       });
@@ -306,10 +317,12 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
         toast.error(`Erro: ${error.message}`);
       }
     } else {
-      toast.success('Partida CBFD adicionada!');
+      toast.success('Partida adicionada!');
       setSelectedTeamA('');
       setSelectedTeamB('');
-      setNewOdd('');
+      setOddA('2.00');
+      setOddDraw('3.00');
+      setOddB('2.00');
       setSelectedChampionship('');
       setMatchDate('');
       setMatchTime('');
@@ -338,7 +351,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
 
   const handleSettleMatch = async () => {
     if (!settlingGame || !winnerTeam) {
-      toast.error('Selecione o vencedor');
+      toast.error('Selecione o resultado');
       return;
     }
 
@@ -420,12 +433,12 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
           </Card>
         </div>
 
-        {/* SEÇÃO ESPORTIVA CBFD */}
+        {/* SEÇÃO ESPORTIVA */}
         <Card className="border-secondary/50 mb-4">
           <CardHeader className="p-3 sm:p-4 pb-2">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-secondary">
               <Trophy className="h-5 w-5" />
-              SEÇÃO ESPORTIVA CBFD
+              TIMES VIRTUAIS
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 sm:p-4 pt-2">
@@ -438,7 +451,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                   Times
                 </TabsTrigger>
                 <TabsTrigger value="campeonatos" className="text-xs sm:text-sm py-2 px-1 data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground">
-                  Campeonatos
+                  Ligas
                 </TabsTrigger>
               </TabsList>
 
@@ -473,33 +486,60 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                       </Select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Campeonato / Liga</Label>
+                    <Select value={selectedChampionship} onValueChange={setSelectedChampionship}>
+                      <SelectTrigger className="mt-1 h-10">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cbfdChampionships.map((champ) => (
+                          <SelectItem key={champ.id} value={champ.id}>{champ.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 3 Odds */}
+                  <div className="grid grid-cols-3 gap-2">
                     <div>
-                      <Label className="text-xs">Campeonato</Label>
-                      <Select value={selectedChampionship} onValueChange={setSelectedChampionship}>
-                        <SelectTrigger className="mt-1 h-10">
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {cbfdChampionships.map((champ) => (
-                            <SelectItem key={champ.id} value={champ.id}>{champ.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Odd</Label>
+                      <Label className="text-xs">Odd Time A</Label>
                       <Input
                         type="number"
-                        value={newOdd}
-                        onChange={(e) => setNewOdd(e.target.value)}
-                        placeholder="Ex: 2.50"
+                        value={oddA}
+                        onChange={(e) => setOddA(e.target.value)}
+                        placeholder="2.00"
+                        step="0.01"
+                        min="1"
+                        className="mt-1 h-10"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Odd Empate</Label>
+                      <Input
+                        type="number"
+                        value={oddDraw}
+                        onChange={(e) => setOddDraw(e.target.value)}
+                        placeholder="3.00"
+                        step="0.01"
+                        min="1"
+                        className="mt-1 h-10"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Odd Time B</Label>
+                      <Input
+                        type="number"
+                        value={oddB}
+                        onChange={(e) => setOddB(e.target.value)}
+                        placeholder="2.00"
                         step="0.01"
                         min="1"
                         className="mt-1 h-10"
                       />
                     </div>
                   </div>
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Data</Label>
@@ -537,7 +577,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-sm truncate">{game.team_a} vs {game.team_b}</p>
                             <p className="text-xs text-muted-foreground truncate">
-                              {game.championship} • Odd: {Number(game.odd).toFixed(2)}x
+                              {game.championship} • {Number(game.odd_a).toFixed(2)} / {Number(game.odd_draw).toFixed(2)} / {Number(game.odd_b).toFixed(2)}
                               {game.match_date && ` • ${new Date(game.match_date).toLocaleDateString('pt-BR')}`}
                             </p>
                           </div>
@@ -553,9 +593,6 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                               </Button>
                             </div>
                           )}
-                          <Button variant="destructive" size="icon" onClick={() => handleDeleteGame(game.id)} className="h-8 w-8 shrink-0">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
                       ))
                     )}
@@ -580,7 +617,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                 <div className="space-y-2">
                   <h4 className="font-medium text-sm flex items-center gap-2">
                     <Shield className="h-4 w-4" />
-                    Times CBFD ({cbfdTeams.length})
+                    Times ({cbfdTeams.length})
                   </h4>
                   <div className="grid gap-2 max-h-48 overflow-y-auto">
                     {cbfdTeams.length === 0 ? (
@@ -605,7 +642,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                   <Input
                     value={newChampionshipName}
                     onChange={(e) => setNewChampionshipName(e.target.value)}
-                    placeholder="Nome do campeonato"
+                    placeholder="Nome da liga/campeonato"
                     className="flex-1 h-10"
                   />
                   <Button onClick={handleAddChampionship} disabled={isAddingChampionship} className="shrink-0 h-10 glow-primary">
@@ -616,11 +653,11 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                 <div className="space-y-2">
                   <h4 className="font-medium text-sm flex items-center gap-2">
                     <Trophy className="h-4 w-4" />
-                    Campeonatos ({cbfdChampionships.length})
+                    Ligas / Campeonatos ({cbfdChampionships.length})
                   </h4>
                   <div className="grid gap-2 max-h-48 overflow-y-auto">
                     {cbfdChampionships.length === 0 ? (
-                      <p className="text-xs text-muted-foreground py-4 text-center">Nenhum campeonato</p>
+                      <p className="text-xs text-muted-foreground py-4 text-center">Nenhuma liga cadastrada</p>
                     ) : (
                       cbfdChampionships.map((champ) => (
                         <div key={champ.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -711,12 +748,13 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <div>
-                <Label>Vencedor</Label>
+                <Label>Resultado</Label>
                 <Select value={winnerTeam} onValueChange={setWinnerTeam}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione o resultado" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={settlingGame?.team_a || ''}>{settlingGame?.team_a}</SelectItem>
-                    <SelectItem value={settlingGame?.team_b || ''}>{settlingGame?.team_b}</SelectItem>
+                    <SelectItem value={settlingGame?.team_a || ''}>Vitória {settlingGame?.team_a}</SelectItem>
+                    <SelectItem value="draw">Empate</SelectItem>
+                    <SelectItem value={settlingGame?.team_b || ''}>Vitória {settlingGame?.team_b}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

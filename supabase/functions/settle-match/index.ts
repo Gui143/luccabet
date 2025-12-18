@@ -119,7 +119,20 @@ serve(async (req) => {
 
     // Process each bet
     for (const bet of bets || []) {
-      const isWinner = bet.selected_team === winner_team;
+      // Check winning condition based on bet_type
+      let isWinner = false;
+      
+      if (winner_team === 'draw') {
+        // Draw result - only bet_type 'draw' wins
+        isWinner = bet.bet_type === 'draw';
+      } else if (winner_team === game.team_a) {
+        // Team A won - bet_type 'team_a' wins OR old bets with selected_team matching
+        isWinner = bet.bet_type === 'team_a' || (bet.bet_type === null && bet.selected_team === game.team_a);
+      } else if (winner_team === game.team_b) {
+        // Team B won - bet_type 'team_b' wins OR old bets with selected_team matching
+        isWinner = bet.bet_type === 'team_b' || (bet.bet_type === null && bet.selected_team === game.team_b);
+      }
+
       const newStatus = isWinner ? 'won' : 'lost';
 
       // Update bet status

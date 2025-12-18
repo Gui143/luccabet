@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, Trophy, CircleDot, Plane, Rocket } from 'lucide-react';
+import { Zap, Trophy, CircleDot, Plane, Rocket, Cat, Goal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
@@ -8,44 +8,62 @@ import Layout from '@/components/Layout';
 const Games: React.FC = () => {
   const games = [
     {
+      title: 'Fortune Tiger',
+      description: 'O tigre da fortuna! Gire os rolos e ganhe prêmios.',
+      icon: Cat,
+      color: 'from-yellow-500 to-red-500',
+      path: '/games/fortune-tiger',
+      odds: 'Até 50x',
+      isNew: true
+    },
+    {
+      title: 'Penalty Burrows',
+      description: 'Cobre pênaltis e vença o goleiro! Estilo 3D cartoon.',
+      icon: Goal,
+      color: 'from-green-500 to-green-600',
+      path: '/games/penalty-burrows',
+      odds: 'Até 2x',
+      isNew: true
+    },
+    {
       title: 'Mines',
-      description: 'Find diamonds and avoid bombs. Configure bomb count and cash out anytime!',
+      description: 'Encontre diamantes e evite bombas. Configure e saque a qualquer momento!',
       icon: Zap,
       color: 'from-primary to-primary/60',
       path: '/games/mines',
-      odds: 'Up to 50x'
+      odds: 'Até 50x'
     },
     {
       title: 'Aviator',
-      description: 'Watch the plane fly higher! Cash out before it crashes.',
+      description: 'Veja o avião subir! Saque antes de cair.',
       icon: Plane,
       color: 'from-blue-500 to-blue-600',
       path: '/games/aviator',
-      odds: 'Up to 100x'
+      odds: 'Até 100x'
     },
     {
       title: 'Crash Duplo',
-      description: 'Two simultaneous crash games - double your action!',
+      description: 'Dois jogos crash simultâneos - dobre a ação!',
       icon: Rocket,
       color: 'from-purple-500 to-purple-600',
       path: '/games/crash-duplo',
-      odds: 'Up to 50x each'
+      odds: 'Até 50x cada'
     },
     {
       title: 'Slots',
-      description: 'Spin the reels and match symbols for big wins!',
+      description: 'Gire os rolos e combine símbolos para ganhar!',
       icon: Trophy,
       color: 'from-secondary to-secondary/60',
       path: '/games/slots',
-      odds: 'Up to 10x'
+      odds: 'Até 10x'
     },
     {
-      title: 'Roulette',
-      description: 'Classic casino roulette with multiple betting options.',
+      title: 'Roleta',
+      description: 'Roleta clássica com múltiplas opções de aposta.',
       icon: CircleDot,
       color: 'from-accent to-accent/60',
       path: '/games/roulette',
-      odds: 'Up to 35x'
+      odds: 'Até 35x'
     },
   ];
 
@@ -53,8 +71,8 @@ const Games: React.FC = () => {
     <Layout>
       <div className="space-y-6">
         <div>
-          <h2 className="text-3xl font-bold mb-2">Casino Games</h2>
-          <p className="text-muted-foreground">Choose your game and start winning!</p>
+          <h2 className="text-3xl font-bold mb-2">Jogos de Cassino</h2>
+          <p className="text-muted-foreground">Escolha seu jogo e comece a ganhar! 100% simulado.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -62,7 +80,12 @@ const Games: React.FC = () => {
             const Icon = game.icon;
             return (
               <Link key={game.title} to={game.path}>
-                <Card className="bet-card h-full hover:scale-105 transition-all">
+                <Card className="bet-card h-full hover:scale-105 transition-all relative">
+                  {game.isNew && (
+                    <div className="absolute -top-2 -right-2 bg-secondary text-secondary-foreground text-xs font-bold px-2 py-1 rounded-full z-10">
+                      NOVO
+                    </div>
+                  )}
                   <CardHeader>
                     <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${game.color} flex items-center justify-center mb-4 glow-primary`}>
                       <Icon className="h-8 w-8 text-white" />
@@ -72,10 +95,10 @@ const Games: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm text-muted-foreground">Max Win</span>
+                      <span className="text-sm text-muted-foreground">Ganho Máx.</span>
                       <span className="text-lg font-bold text-secondary">{game.odds}</span>
                     </div>
-                    <Button className="w-full glow-primary">Play Now</Button>
+                    <Button className="w-full glow-primary">Jogar Agora</Button>
                   </CardContent>
                 </Card>
               </Link>
