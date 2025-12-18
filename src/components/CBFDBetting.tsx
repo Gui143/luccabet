@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Calendar, TrendingUp } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,9 @@ interface CBFDGame {
   team_a: string;
   team_b: string;
   odd: number;
+  odd_a: number;
+  odd_draw: number;
+  odd_b: number;
   championship: string;
   is_active: boolean;
   match_date: string | null;
@@ -25,7 +28,7 @@ const CBFDBetting: React.FC = () => {
   const { user, updateBalance } = useAuth();
   const [games, setGames] = useState<CBFDGame[]>([]);
   const [selectedGame, setSelectedGame] = useState<CBFDGame | null>(null);
-  const [selectedTeam, setSelectedTeam] = useState<string>('');
+  const [betType, setBetType] = useState<string>('');
   const [betAmount, setBetAmount] = useState<string>('');
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [showBetDialog, setShowBetDialog] = useState(false);
@@ -33,7 +36,6 @@ const CBFDBetting: React.FC = () => {
   useEffect(() => {
     loadGames();
 
-    // Listen for realtime updates
     const channel = supabase
       .channel('cbfd-games-updates')
       .on(
@@ -60,19 +62,35 @@ const CBFDBetting: React.FC = () => {
       .order('match_date', { ascending: true });
 
     if (!error && data) {
-      setGames(data);
+      setGames(data as CBFDGame[]);
     }
   };
 
   const openBetDialog = (game: CBFDGame) => {
     setSelectedGame(game);
-    setSelectedTeam('');
+    setBetType('');
     setBetAmount('');
     setShowBetDialog(true);
   };
 
+  const getSelectedOdd = (): number => {
+    if (!selectedGame || !betType) return 0;
+    if (betType === 'team_a') return selectedGame.odd_a;
+    if (betType === 'draw') return selectedGame.odd_draw;
+    if (betType === 'team_b') return selectedGame.odd_b;
+    return 0;
+  };
+
+  const getSelectedTeamLabel = (): string => {
+    if (!selectedGame || !betType) return '';
+    if (betType === 'team_a') return selectedGame.team_a;
+    if (betType === 'draw') return 'Empate';
+    if (betType === 'team_b') return selectedGame.team_b;
+    return '';
+  };
+
   const handlePlaceBet = async () => {
-    if (!user || !selectedGame || !selectedTeam || !betAmount) {
+    if (!user || !selectedGame || !betType || !betAmount) {
       toast.error('Preencha todos os campos');
       return;
     }
@@ -91,7 +109,8 @@ const CBFDBetting: React.FC = () => {
     setIsPlacingBet(true);
 
     try {
-      const potentialWin = amount * selectedGame.odd;
+      const selectedOdd = getSelectedOdd();
+      const potentialWin = amount * selectedOdd;
 
       // Deduct balance first
       const { error: balanceError } = await supabase
@@ -103,15 +122,16 @@ const CBFDBetting: React.FC = () => {
         throw new Error('Erro ao debitar saldo');
       }
 
-      // Create bet record
+      // Create bet record with bet_type
       const { error: betError } = await supabase
         .from('cbfd_bets')
         .insert({
           user_id: user.id,
           game_id: selectedGame.id,
           amount,
-          odd: selectedGame.odd,
-          selected_team: selectedTeam,
+          odd: selectedOdd,
+          selected_team: getSelectedTeamLabel(),
+          bet_type: betType,
           potential_win: potentialWin,
           status: 'open'
         });
@@ -128,10 +148,10 @@ const CBFDBetting: React.FC = () => {
       // Update local balance
       await updateBalance(-amount);
 
-      toast.success(`Aposta de € ${amount.toFixed(2)} em ${selectedTeam} registrada!`);
+      toast.success(`Aposta de € ${amount.toFixed(2)} em ${getSelectedTeamLabel()} registrada!`);
       setShowBetDialog(false);
       setSelectedGame(null);
-      setSelectedTeam('');
+      setBetType('');
       setBetAmount('');
     } catch (error: any) {
       toast.error(error.message || 'Erro ao fazer aposta');
@@ -148,7 +168,7 @@ const CBFDBetting: React.FC = () => {
     <div className="space-y-4">
       <h3 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
         <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-secondary" />
-        APOSTE EM TIMES DA CBFD
+        APOSTE EM TIMES VIRTUAIS
       </h3>
 
       <div className="grid gap-3 sm:gap-4">
@@ -177,21 +197,31 @@ const CBFDBetting: React.FC = () => {
                   </div>
                 )}
 
-                {/* Odd and Bet Button */}
-                <div className="flex items-center justify-between pt-2 border-t border-border">
-                  <div className="text-center">
-                    <div className="text-xl sm:text-2xl font-bold text-secondary">{Number(game.odd).toFixed(2)}x</div>
-                    <div className="text-xs text-muted-foreground">Odd</div>
+                {/* Odds Display */}
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
+                  <div className="text-center p-2 rounded-lg bg-muted/50">
+                    <div className="text-lg sm:text-xl font-bold text-primary">{Number(game.odd_a).toFixed(2)}</div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground truncate">{game.team_a}</div>
                   </div>
-                  <Button 
-                    onClick={() => openBetDialog(game)} 
-                    className="glow-primary h-10 sm:h-11 text-sm sm:text-base px-6"
-                    disabled={!user}
-                  >
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Apostar
-                  </Button>
+                  <div className="text-center p-2 rounded-lg bg-muted/50">
+                    <div className="text-lg sm:text-xl font-bold text-muted-foreground">{Number(game.odd_draw).toFixed(2)}</div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">Empate</div>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-muted/50">
+                    <div className="text-lg sm:text-xl font-bold text-secondary">{Number(game.odd_b).toFixed(2)}</div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground truncate">{game.team_b}</div>
+                  </div>
                 </div>
+
+                {/* Bet Button */}
+                <Button 
+                  onClick={() => openBetDialog(game)} 
+                  className="w-full glow-primary h-10 sm:h-11 text-sm sm:text-base"
+                  disabled={!user}
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Fazer Aposta
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -202,24 +232,37 @@ const CBFDBetting: React.FC = () => {
       <Dialog open={showBetDialog} onOpenChange={setShowBetDialog}>
         <DialogContent className="max-w-md mx-4">
           <DialogHeader>
-            <DialogTitle className="text-lg">Fazer Aposta CBFD</DialogTitle>
+            <DialogTitle className="text-lg">Fazer Aposta</DialogTitle>
             <DialogDescription>
               {selectedGame?.team_a} vs {selectedGame?.team_b}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 pt-4">
-            {/* Team Selection */}
+            {/* Bet Type Selection */}
             <div className="space-y-2">
-              <Label>Selecione o Time Vencedor</Label>
-              <RadioGroup value={selectedTeam} onValueChange={setSelectedTeam}>
+              <Label>Escolha o Resultado</Label>
+              <RadioGroup value={betType} onValueChange={setBetType}>
                 <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer">
-                  <RadioGroupItem value={selectedGame?.team_a || ''} id="team_a" />
-                  <Label htmlFor="team_a" className="cursor-pointer flex-1">{selectedGame?.team_a}</Label>
+                  <RadioGroupItem value="team_a" id="bet_team_a" />
+                  <Label htmlFor="bet_team_a" className="cursor-pointer flex-1 flex justify-between">
+                    <span>{selectedGame?.team_a}</span>
+                    <span className="font-bold text-primary">{Number(selectedGame?.odd_a || 0).toFixed(2)}x</span>
+                  </Label>
                 </div>
                 <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer">
-                  <RadioGroupItem value={selectedGame?.team_b || ''} id="team_b" />
-                  <Label htmlFor="team_b" className="cursor-pointer flex-1">{selectedGame?.team_b}</Label>
+                  <RadioGroupItem value="draw" id="bet_draw" />
+                  <Label htmlFor="bet_draw" className="cursor-pointer flex-1 flex justify-between">
+                    <span>Empate</span>
+                    <span className="font-bold text-muted-foreground">{Number(selectedGame?.odd_draw || 0).toFixed(2)}x</span>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer">
+                  <RadioGroupItem value="team_b" id="bet_team_b" />
+                  <Label htmlFor="bet_team_b" className="cursor-pointer flex-1 flex justify-between">
+                    <span>{selectedGame?.team_b}</span>
+                    <span className="font-bold text-secondary">{Number(selectedGame?.odd_b || 0).toFixed(2)}x</span>
+                  </Label>
                 </div>
               </RadioGroup>
             </div>
@@ -243,11 +286,11 @@ const CBFDBetting: React.FC = () => {
             </div>
 
             {/* Potential Win */}
-            {selectedTeam && betAmount && parseFloat(betAmount) > 0 && selectedGame && (
+            {betType && betAmount && parseFloat(betAmount) > 0 && selectedGame && (
               <div className="p-3 rounded-lg bg-secondary/20 border border-secondary/30">
                 <p className="text-sm text-muted-foreground">Ganho Potencial:</p>
                 <p className="text-xl font-bold text-secondary">
-                  € {(parseFloat(betAmount) * selectedGame.odd).toFixed(2)}
+                  € {(parseFloat(betAmount) * getSelectedOdd()).toFixed(2)}
                 </p>
               </div>
             )}
@@ -255,7 +298,7 @@ const CBFDBetting: React.FC = () => {
             {/* Submit */}
             <Button 
               onClick={handlePlaceBet} 
-              disabled={isPlacingBet || !selectedTeam || !betAmount}
+              disabled={isPlacingBet || !betType || !betAmount}
               className="w-full glow-primary"
             >
               {isPlacingBet ? 'Processando...' : 'Confirmar Aposta'}

@@ -17,6 +17,7 @@ export type Database = {
       cbfd_bets: {
         Row: {
           amount: number
+          bet_type: string | null
           created_at: string
           game_id: string
           id: string
@@ -28,6 +29,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          bet_type?: string | null
           created_at?: string
           game_id: string
           id?: string
@@ -39,6 +41,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bet_type?: string | null
           created_at?: string
           game_id?: string
           id?: string
@@ -95,6 +98,9 @@ export type Database = {
           is_active: boolean
           match_date: string | null
           odd: number
+          odd_a: number
+          odd_b: number
+          odd_draw: number
           score_a: number | null
           score_b: number | null
           settled_at: string | null
@@ -110,6 +116,9 @@ export type Database = {
           is_active?: boolean
           match_date?: string | null
           odd?: number
+          odd_a?: number
+          odd_b?: number
+          odd_draw?: number
           score_a?: number | null
           score_b?: number | null
           settled_at?: string | null
@@ -125,6 +134,9 @@ export type Database = {
           is_active?: boolean
           match_date?: string | null
           odd?: number
+          odd_a?: number
+          odd_b?: number
+          odd_draw?: number
           score_a?: number | null
           score_b?: number | null
           settled_at?: string | null

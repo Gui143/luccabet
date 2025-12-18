@@ -34,13 +34,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [isCEO, isMobile]);
 
-  // Base nav items
+  // Base nav items - PT-BR
   const navItems = [
-    { path: '/', label: 'Home', icon: Home },
-    { path: '/games', label: 'Games', icon: Gamepad2 },
-    { path: '/wallet', label: 'Wallet', icon: Wallet },
-    { path: '/my-bets', label: 'My Bets', icon: ListOrdered },
-    { path: '/account', label: 'Account', icon: User },
+    { path: '/', label: 'Início', icon: Home },
+    { path: '/games', label: 'Jogos', icon: Gamepad2 },
+    { path: '/wallet', label: 'Carteira', icon: Wallet },
+    { path: '/my-bets', label: 'Apostas', icon: ListOrdered },
+    { path: '/account', label: 'Conta', icon: User },
   ];
 
   if (!user) {
@@ -158,7 +158,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2024 LUCCABET. Plataforma 100% simulada. Moeda fictícia.
+              © 2026 LUCCABET – Todos os direitos reservados
             </p>
           </div>
         </div>
