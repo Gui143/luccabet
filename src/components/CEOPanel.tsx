@@ -60,9 +60,9 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
   const [selectedTeamA, setSelectedTeamA] = useState('');
   const [selectedTeamB, setSelectedTeamB] = useState('');
   const [selectedChampionship, setSelectedChampionship] = useState('');
-  const [oddA, setOddA] = useState('2.00');
-  const [oddDraw, setOddDraw] = useState('3.00');
-  const [oddB, setOddB] = useState('2.00');
+  const [oddA, setOddA] = useState('');
+  const [oddDraw, setOddDraw] = useState('');
+  const [oddB, setOddB] = useState('');
   const [matchDate, setMatchDate] = useState('');
   const [matchTime, setMatchTime] = useState('');
   
@@ -275,6 +275,11 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       return;
     }
 
+    if (!oddA.trim() || !oddDraw.trim() || !oddB.trim()) {
+      toast.error('Preencha todas as odds');
+      return;
+    }
+
     const oddAVal = parseFloat(oddA);
     const oddDrawVal = parseFloat(oddDraw);
     const oddBVal = parseFloat(oddB);
@@ -320,9 +325,9 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       toast.success('Partida adicionada!');
       setSelectedTeamA('');
       setSelectedTeamB('');
-      setOddA('2.00');
-      setOddDraw('3.00');
-      setOddB('2.00');
+      setOddA('');
+      setOddDraw('');
+      setOddB('');
       setSelectedChampionship('');
       setMatchDate('');
       setMatchTime('');
@@ -500,41 +505,44 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                     </Select>
                   </div>
 
-                  {/* 3 Odds */}
+                  {/* 3 Odds - Obrigatórias */}
                   <div className="grid grid-cols-3 gap-2">
                     <div>
-                      <Label className="text-xs">Odd Time A</Label>
+                      <Label className="text-xs">Vitória Casa</Label>
                       <Input
                         type="number"
                         value={oddA}
                         onChange={(e) => setOddA(e.target.value)}
-                        placeholder="2.00"
+                        placeholder="Ex: 1.85"
                         step="0.01"
                         min="1"
+                        required
                         className="mt-1 h-10"
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">Odd Empate</Label>
+                      <Label className="text-xs">Empate</Label>
                       <Input
                         type="number"
                         value={oddDraw}
                         onChange={(e) => setOddDraw(e.target.value)}
-                        placeholder="3.00"
+                        placeholder="Ex: 3.20"
                         step="0.01"
                         min="1"
+                        required
                         className="mt-1 h-10"
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">Odd Time B</Label>
+                      <Label className="text-xs">Vitória Visitante</Label>
                       <Input
                         type="number"
                         value={oddB}
                         onChange={(e) => setOddB(e.target.value)}
-                        placeholder="2.00"
+                        placeholder="Ex: 2.40"
                         step="0.01"
                         min="1"
+                        required
                         className="mt-1 h-10"
                       />
                     </div>
