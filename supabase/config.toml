@@ -1,5 +1,8 @@
 project_id = "wjxskortepwwxdkpufzq"
 
+[functions.redeem-code]
+verify_jwt = false
+
 [functions.credit-user]
 verify_jwt = true
 
