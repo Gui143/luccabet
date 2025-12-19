@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Users, DollarSign, Plus, Trash2, Trophy, Shield, CheckCircle } from 'lucide-react';
+import { X, Users, DollarSign, Plus, Trash2, Trophy, Shield, CheckCircle, Gift, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -10,6 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+interface PromoCode {
+  id: string;
+  code: string;
+  bonus_amount: number;
+  expires_at: string | null;
+  max_uses: number | null;
+  current_uses: number;
+  is_active: boolean;
+  created_at: string;
+}
 
 interface CEOPanelProps {
   isOpen: boolean;
@@ -53,7 +64,14 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
   const [cbfdGames, setCbfdGames] = useState<CBFDGame[]>([]);
   const [cbfdTeams, setCbfdTeams] = useState<CBFDTeam[]>([]);
   const [cbfdChampionships, setCbfdChampionships] = useState<CBFDChampionship[]>([]);
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   
+  // Promo code form states
+  const [newPromoCode, setNewPromoCode] = useState('');
+  const [promoBonus, setPromoBonus] = useState('');
+  const [promoExpires, setPromoExpires] = useState('');
+  const [promoMaxUses, setPromoMaxUses] = useState('');
+  const [isAddingPromo, setIsAddingPromo] = useState(false);
   // Form states
   const [newTeamName, setNewTeamName] = useState('');
   const [newChampionshipName, setNewChampionshipName] = useState('');
@@ -104,8 +122,17 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       loadOnlineUsers(),
       loadCBFDGames(),
       loadCBFDTeams(),
-      loadCBFDChampionships()
+      loadCBFDChampionships(),
+      loadPromoCodes()
     ]);
+  };
+
+  const loadPromoCodes = async () => {
+    const { data } = await supabase
+      .from('promo_codes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (data) setPromoCodes(data as PromoCode[]);
   };
 
   const loadOnlineUsers = async () => {
@@ -153,7 +180,64 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleCreditUser = async () => {
+  const handleAddPromoCode = async () => {
+    if (!newPromoCode.trim() || !promoBonus) {
+      toast.error('Digite código e valor do bônus');
+      return;
+    }
+
+    const bonus = parseFloat(promoBonus);
+    if (isNaN(bonus) || bonus <= 0) {
+      toast.error('Digite um valor de bônus válido');
+      return;
+    }
+
+    setIsAddingPromo(true);
+    const { error } = await supabase.from('promo_codes').insert({
+      code: newPromoCode.trim().toUpperCase(),
+      bonus_amount: bonus,
+      expires_at: promoExpires ? new Date(promoExpires).toISOString() : null,
+      max_uses: promoMaxUses ? parseInt(promoMaxUses) : null
+    });
+
+    if (error) {
+      if (error.code === '23505') {
+        toast.error('Este código já existe');
+      } else {
+        toast.error('Erro ao criar código');
+      }
+    } else {
+      toast.success('Código promocional criado!');
+      setNewPromoCode('');
+      setPromoBonus('');
+      setPromoExpires('');
+      setPromoMaxUses('');
+      loadPromoCodes();
+    }
+    setIsAddingPromo(false);
+  };
+
+  const handleTogglePromoCode = async (id: string, currentState: boolean) => {
+    const { error } = await supabase
+      .from('promo_codes')
+      .update({ is_active: !currentState })
+      .eq('id', id);
+
+    if (error) toast.error('Erro ao atualizar código');
+    else {
+      toast.success(currentState ? 'Código desativado' : 'Código ativado');
+      loadPromoCodes();
+    }
+  };
+
+  const handleDeletePromoCode = async (id: string) => {
+    const { error } = await supabase.from('promo_codes').delete().eq('id', id);
+    if (error) toast.error('Erro ao remover código');
+    else {
+      toast.success('Código removido');
+      loadPromoCodes();
+    }
+  };
     if (!username.trim() || !creditAmount) {
       toast.error('Digite usuário e valor');
       return;
@@ -680,6 +764,107 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                 </div>
               </TabsContent>
             </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* Promo Codes Section */}
+        <Card className="border-secondary/50 mb-4">
+          <CardHeader className="p-3 sm:p-4 pb-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-secondary">
+              <Gift className="h-5 w-5" />
+              CÓDIGOS PROMOCIONAIS
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 sm:p-4 pt-2 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div>
+                <Label className="text-xs">Código</Label>
+                <Input
+                  value={newPromoCode}
+                  onChange={(e) => setNewPromoCode(e.target.value.toUpperCase())}
+                  placeholder="EX: BONUS50"
+                  className="mt-1 h-10"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Bônus (€)</Label>
+                <Input
+                  type="number"
+                  value={promoBonus}
+                  onChange={(e) => setPromoBonus(e.target.value)}
+                  placeholder="50.00"
+                  step="0.01"
+                  min="0"
+                  className="mt-1 h-10"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Expira em</Label>
+                <Input
+                  type="date"
+                  value={promoExpires}
+                  onChange={(e) => setPromoExpires(e.target.value)}
+                  className="mt-1 h-10"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Limite de Usos</Label>
+                <Input
+                  type="number"
+                  value={promoMaxUses}
+                  onChange={(e) => setPromoMaxUses(e.target.value)}
+                  placeholder="Ilimitado"
+                  min="1"
+                  className="mt-1 h-10"
+                />
+              </div>
+            </div>
+            <Button onClick={handleAddPromoCode} disabled={isAddingPromo} className="w-full h-10 glow-primary">
+              <Plus className="h-4 w-4 mr-2" />
+              {isAddingPromo ? 'Criando...' : 'Criar Código Promocional'}
+            </Button>
+
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              <h4 className="font-medium text-sm">Códigos Ativos ({promoCodes.length})</h4>
+              {promoCodes.map((promo) => (
+                <div key={promo.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono font-bold text-sm">{promo.code}</p>
+                    <p className="text-xs text-muted-foreground">
+                      € {Number(promo.bonus_amount).toFixed(2)} • Usos: {promo.current_uses}{promo.max_uses ? `/${promo.max_uses}` : ''}
+                      {promo.expires_at && ` • Exp: ${new Date(promo.expires_at).toLocaleDateString('pt-BR')}`}
+                    </p>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    {!promo.is_active && (
+                      <span className="text-xs px-2 py-1 bg-destructive/20 text-destructive rounded mr-1">
+                        Desativado
+                      </span>
+                    )}
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => handleTogglePromoCode(promo.id, promo.is_active)}
+                      className="h-8 w-8"
+                    >
+                      {promo.is_active ? (
+                        <ToggleRight className="h-4 w-4 text-success" />
+                      ) : (
+                        <ToggleLeft className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      onClick={() => handleDeletePromoCode(promo.id)}
+                      className="h-8 w-8"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 

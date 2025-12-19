@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Shield, Plus, Trash2, Users, DollarSign, CheckCircle, Calendar, Settings } from 'lucide-react';
+import { Trophy, Shield, Plus, Trash2, Users, DollarSign, CheckCircle, Calendar, Settings, Gift, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,9 @@ interface CBFDGame {
   team_a: string;
   team_b: string;
   odd: number;
+  odd_a: number;
+  odd_draw: number;
+  odd_b: number;
   championship: string;
   is_active: boolean;
   match_date: string | null;
@@ -32,11 +35,23 @@ interface CBFDChampionship {
   name: string;
 }
 
+interface PromoCode {
+  id: string;
+  code: string;
+  bonus_amount: number;
+  expires_at: string | null;
+  max_uses: number | null;
+  current_uses: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 const MobileAdminPanel: React.FC = () => {
   const [cbfdGames, setCbfdGames] = useState<CBFDGame[]>([]);
   const [cbfdTeams, setCbfdTeams] = useState<CBFDTeam[]>([]);
   const [cbfdChampionships, setCbfdChampionships] = useState<CBFDChampionship[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   
   // Form states
   const [newTeamName, setNewTeamName] = useState('');
@@ -44,7 +59,9 @@ const MobileAdminPanel: React.FC = () => {
   const [selectedTeamA, setSelectedTeamA] = useState('');
   const [selectedTeamB, setSelectedTeamB] = useState('');
   const [selectedChampionship, setSelectedChampionship] = useState('');
-  const [newOdd, setNewOdd] = useState('');
+  const [oddA, setOddA] = useState('');
+  const [oddDraw, setOddDraw] = useState('');
+  const [oddB, setOddB] = useState('');
   const [matchDate, setMatchDate] = useState('');
   const [matchTime, setMatchTime] = useState('');
   
@@ -65,6 +82,13 @@ const MobileAdminPanel: React.FC = () => {
   const [isAddingChampionship, setIsAddingChampionship] = useState(false);
   const [isAddingGame, setIsAddingGame] = useState(false);
 
+  // Promo code form states
+  const [newPromoCode, setNewPromoCode] = useState('');
+  const [promoBonus, setPromoBonus] = useState('');
+  const [promoExpires, setPromoExpires] = useState('');
+  const [promoMaxUses, setPromoMaxUses] = useState('');
+  const [isAddingPromo, setIsAddingPromo] = useState(false);
+
   useEffect(() => {
     loadAllData();
   }, []);
@@ -74,8 +98,17 @@ const MobileAdminPanel: React.FC = () => {
       loadOnlineUsers(),
       loadCBFDGames(),
       loadCBFDTeams(),
-      loadCBFDChampionships()
+      loadCBFDChampionships(),
+      loadPromoCodes()
     ]);
+  };
+
+  const loadPromoCodes = async () => {
+    const { data } = await supabase
+      .from('promo_codes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (data) setPromoCodes(data as PromoCode[]);
   };
 
   const loadOnlineUsers = async () => {
@@ -198,8 +231,13 @@ const MobileAdminPanel: React.FC = () => {
   };
 
   const handleAddGame = async () => {
-    if (!selectedTeamA || !selectedTeamB || !newOdd || !selectedChampionship) {
+    if (!selectedTeamA || !selectedTeamB || !selectedChampionship) {
       toast.error('Preencha todos os campos');
+      return;
+    }
+
+    if (!oddA.trim() || !oddDraw.trim() || !oddB.trim()) {
+      toast.error('Preencha todas as odds');
       return;
     }
 
@@ -208,9 +246,12 @@ const MobileAdminPanel: React.FC = () => {
       return;
     }
 
-    const odd = parseFloat(newOdd);
-    if (isNaN(odd) || odd < 1) {
-      toast.error('Digite uma odd válida');
+    const oddAVal = parseFloat(oddA);
+    const oddDrawVal = parseFloat(oddDraw);
+    const oddBVal = parseFloat(oddB);
+
+    if (isNaN(oddAVal) || oddAVal < 1 || isNaN(oddDrawVal) || oddDrawVal < 1 || isNaN(oddBVal) || oddBVal < 1) {
+      toast.error('Digite odds válidas (mínimo 1.00)');
       return;
     }
 
@@ -229,7 +270,10 @@ const MobileAdminPanel: React.FC = () => {
     const { error } = await supabase.from('cbfd_games').insert({
       team_a: teamA,
       team_b: teamB,
-      odd,
+      odd_a: oddAVal,
+      odd_draw: oddDrawVal,
+      odd_b: oddBVal,
+      odd: oddAVal, // legacy field
       championship,
       match_date: matchDateTime
     });
@@ -239,13 +283,74 @@ const MobileAdminPanel: React.FC = () => {
       toast.success('Partida adicionada!');
       setSelectedTeamA('');
       setSelectedTeamB('');
-      setNewOdd('');
+      setOddA('');
+      setOddDraw('');
+      setOddB('');
       setSelectedChampionship('');
       setMatchDate('');
       setMatchTime('');
       loadCBFDGames();
     }
     setIsAddingGame(false);
+  };
+
+  const handleAddPromoCode = async () => {
+    if (!newPromoCode.trim() || !promoBonus) {
+      toast.error('Digite código e valor do bônus');
+      return;
+    }
+
+    const bonus = parseFloat(promoBonus);
+    if (isNaN(bonus) || bonus <= 0) {
+      toast.error('Digite um valor de bônus válido');
+      return;
+    }
+
+    setIsAddingPromo(true);
+    const { error } = await supabase.from('promo_codes').insert({
+      code: newPromoCode.trim().toUpperCase(),
+      bonus_amount: bonus,
+      expires_at: promoExpires ? new Date(promoExpires).toISOString() : null,
+      max_uses: promoMaxUses ? parseInt(promoMaxUses) : null
+    });
+
+    if (error) {
+      if (error.code === '23505') {
+        toast.error('Este código já existe');
+      } else {
+        toast.error('Erro ao criar código');
+      }
+    } else {
+      toast.success('Código promocional criado!');
+      setNewPromoCode('');
+      setPromoBonus('');
+      setPromoExpires('');
+      setPromoMaxUses('');
+      loadPromoCodes();
+    }
+    setIsAddingPromo(false);
+  };
+
+  const handleTogglePromoCode = async (id: string, currentState: boolean) => {
+    const { error } = await supabase
+      .from('promo_codes')
+      .update({ is_active: !currentState })
+      .eq('id', id);
+
+    if (error) toast.error('Erro ao atualizar código');
+    else {
+      toast.success(currentState ? 'Código desativado' : 'Código ativado');
+      loadPromoCodes();
+    }
+  };
+
+  const handleDeletePromoCode = async (id: string) => {
+    const { error } = await supabase.from('promo_codes').delete().eq('id', id);
+    if (error) toast.error('Erro ao remover código');
+    else {
+      toast.success('Código removido');
+      loadPromoCodes();
+    }
   };
 
   const handleDeleteGame = async (id: string) => {
@@ -303,7 +408,7 @@ const MobileAdminPanel: React.FC = () => {
       </div>
 
       <Tabs defaultValue="partidas" className="w-full">
-        <TabsList className="w-full grid grid-cols-4 h-auto gap-1 bg-muted/50 p-1">
+        <TabsList className="w-full grid grid-cols-5 h-auto gap-1 bg-muted/50 p-1">
           <TabsTrigger value="partidas" className="text-xs py-2 px-1">
             Partidas
           </TabsTrigger>
@@ -315,6 +420,9 @@ const MobileAdminPanel: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="usuarios" className="text-xs py-2 px-1">
             Usuários
+          </TabsTrigger>
+          <TabsTrigger value="codigos" className="text-xs py-2 px-1">
+            Códigos
           </TabsTrigger>
         </TabsList>
 
@@ -357,29 +465,58 @@ const MobileAdminPanel: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Campeonato</Label>
+                <Select value={selectedChampionship} onValueChange={setSelectedChampionship}>
+                  <SelectTrigger className="h-9 mt-1">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cbfdChampionships.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 3 Odds - Obrigatórias */}
+              <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-xs">Campeonato</Label>
-                  <Select value={selectedChampionship} onValueChange={setSelectedChampionship}>
-                    <SelectTrigger className="h-9 mt-1">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cbfdChampionships.map(c => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs">Odd</Label>
+                  <Label className="text-xs">Vitória Casa</Label>
                   <Input
                     type="number"
-                    value={newOdd}
-                    onChange={(e) => setNewOdd(e.target.value)}
-                    placeholder="2.50"
+                    value={oddA}
+                    onChange={(e) => setOddA(e.target.value)}
+                    placeholder="Ex: 1.85"
                     step="0.01"
                     min="1"
+                    required
+                    className="h-9 mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Empate</Label>
+                  <Input
+                    type="number"
+                    value={oddDraw}
+                    onChange={(e) => setOddDraw(e.target.value)}
+                    placeholder="Ex: 3.20"
+                    step="0.01"
+                    min="1"
+                    required
+                    className="h-9 mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Vitória Visitante</Label>
+                  <Input
+                    type="number"
+                    value={oddB}
+                    onChange={(e) => setOddB(e.target.value)}
+                    placeholder="Ex: 2.40"
+                    step="0.01"
+                    min="1"
+                    required
                     className="h-9 mt-1"
                   />
                 </div>
@@ -512,6 +649,123 @@ const MobileAdminPanel: React.FC = () => {
                 <Button variant="destructive" size="icon" onClick={() => handleDeleteChampionship(champ.id)} className="h-8 w-8">
                   <Trash2 className="h-4 w-4" />
                 </Button>
+              </div>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* CÓDIGOS PROMOCIONAIS */}
+        <TabsContent value="codigos" className="mt-4 space-y-4">
+          <Card className="border-secondary/50">
+            <CardHeader className="p-3 pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Gift className="h-4 w-4" />
+                Novo Código Promocional
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Código</Label>
+                  <Input
+                    value={newPromoCode}
+                    onChange={(e) => setNewPromoCode(e.target.value.toUpperCase())}
+                    placeholder="EX: BONUS50"
+                    className="h-9 mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Bônus (€)</Label>
+                  <Input
+                    type="number"
+                    value={promoBonus}
+                    onChange={(e) => setPromoBonus(e.target.value)}
+                    placeholder="50.00"
+                    step="0.01"
+                    min="0"
+                    className="h-9 mt-1"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Expira em</Label>
+                  <Input
+                    type="date"
+                    value={promoExpires}
+                    onChange={(e) => setPromoExpires(e.target.value)}
+                    className="h-9 mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Limite de Usos</Label>
+                  <Input
+                    type="number"
+                    value={promoMaxUses}
+                    onChange={(e) => setPromoMaxUses(e.target.value)}
+                    placeholder="Ilimitado"
+                    min="1"
+                    className="h-9 mt-1"
+                  />
+                </div>
+              </div>
+              <Button onClick={handleAddPromoCode} disabled={isAddingPromo} className="w-full h-9 glow-primary">
+                <Plus className="h-4 w-4 mr-1" />
+                Criar Código
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <Gift className="h-4 w-4" />
+              Códigos ({promoCodes.length})
+            </h4>
+            {promoCodes.map((promo) => (
+              <div key={promo.id} className="p-3 bg-muted/50 rounded-lg space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono font-bold text-sm">{promo.code}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Bônus: € {Number(promo.bonus_amount).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Usos: {promo.current_uses}{promo.max_uses ? `/${promo.max_uses}` : ' (ilimitado)'}
+                    </p>
+                    {promo.expires_at && (
+                      <p className="text-xs text-muted-foreground">
+                        Expira: {new Date(promo.expires_at).toLocaleDateString('pt-BR')}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => handleTogglePromoCode(promo.id, promo.is_active)}
+                      className="h-8 w-8"
+                    >
+                      {promo.is_active ? (
+                        <ToggleRight className="h-4 w-4 text-success" />
+                      ) : (
+                        <ToggleLeft className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      onClick={() => handleDeletePromoCode(promo.id)}
+                      className="h-8 w-8"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {!promo.is_active && (
+                  <span className="text-xs px-2 py-1 bg-destructive/20 text-destructive rounded">
+                    Desativado
+                  </span>
+                )}
               </div>
             ))}
           </div>
