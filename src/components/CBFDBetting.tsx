@@ -75,9 +75,9 @@ const CBFDBetting: React.FC = () => {
 
   const getSelectedOdd = (): number => {
     if (!selectedGame || !betType) return 0;
-    if (betType === 'team_a') return selectedGame.odd_a;
-    if (betType === 'draw') return selectedGame.odd_draw;
-    if (betType === 'team_b') return selectedGame.odd_b;
+    if (betType === 'team_a') return Number(selectedGame.odd_a);
+    if (betType === 'draw') return Number(selectedGame.odd_draw);
+    if (betType === 'team_b') return Number(selectedGame.odd_b);
     return 0;
   };
 
