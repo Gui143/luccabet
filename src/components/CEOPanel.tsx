@@ -238,6 +238,8 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       loadPromoCodes();
     }
   };
+
+  const handleCreditUser = async () => {
     if (!username.trim() || !creditAmount) {
       toast.error('Digite usuário e valor');
       return;
