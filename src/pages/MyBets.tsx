@@ -19,37 +19,34 @@ const MyBets: React.FC = () => {
     <Layout>
       <div className="space-y-6">
         <div>
-          <h2 className="text-3xl font-bold mb-2">My Bets</h2>
-          <p className="text-muted-foreground">Track your betting history and performance</p>
+          <h2 className="text-3xl font-bold mb-2">Minhas Apostas</h2>
+          <p className="text-muted-foreground">Acompanhe seu histórico e desempenho</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="card-gradient border-border">
             <CardContent className="pt-6">
-              <div className="text-sm text-muted-foreground mb-1">Total Bets</div>
+              <div className="text-sm text-muted-foreground mb-1">Total de Apostas</div>
               <div className="text-2xl font-bold">{totalBets}</div>
             </CardContent>
           </Card>
-
           <Card className="card-gradient border-border">
             <CardContent className="pt-6">
-              <div className="text-sm text-muted-foreground mb-1">Total Wagered</div>
+              <div className="text-sm text-muted-foreground mb-1">Total Apostado</div>
               <div className="text-2xl font-bold text-primary">{formatBRL(totalWagered)}</div>
             </CardContent>
           </Card>
-
           <Card className="card-gradient border-border">
             <CardContent className="pt-6">
-              <div className="text-sm text-muted-foreground mb-1">Win Rate</div>
+              <div className="text-sm text-muted-foreground mb-1">Taxa de Vitória</div>
               <div className="text-2xl font-bold text-primary">
                 {totalBets > 0 ? ((wins / totalBets) * 100).toFixed(1) : 0}%
               </div>
             </CardContent>
           </Card>
-
           <Card className="card-gradient border-border">
             <CardContent className="pt-6">
-              <div className="text-sm text-muted-foreground mb-1">Total Profit/Loss</div>
+              <div className="text-sm text-muted-foreground mb-1">Lucro/Prejuízo</div>
               <div className={`text-2xl font-bold ${totalProfit >= 0 ? 'text-success' : 'text-destructive'}`}>
                 {totalProfit >= 0 ? '+' : ''}{formatBRL(totalProfit)}
               </div>
@@ -61,26 +58,26 @@ const MyBets: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="h-6 w-6 text-primary" />
-              Bet History
+              Histórico de Apostas
             </CardTitle>
-            <CardDescription>Your recent betting activity</CardDescription>
+            <CardDescription>Sua atividade recente</CardDescription>
           </CardHeader>
           <CardContent>
             {bets.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                No bets yet. Start playing to see your history!
+                Nenhuma aposta ainda. Comece a jogar para ver seu histórico!
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Game</TableHead>
-                      <TableHead>Amount</TableHead>
+                      <TableHead>Jogo</TableHead>
+                      <TableHead>Valor</TableHead>
                       <TableHead>Odds</TableHead>
-                      <TableHead>Result</TableHead>
-                      <TableHead>Profit/Loss</TableHead>
-                      <TableHead>Time</TableHead>
+                      <TableHead>Resultado</TableHead>
+                      <TableHead>Lucro/Prejuízo</TableHead>
+                      <TableHead>Data</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -91,19 +88,15 @@ const MyBets: React.FC = () => {
                         <TableCell>{bet.odds.toFixed(2)}x</TableCell>
                         <TableCell>
                           <div className={`flex items-center gap-1 ${bet.result === 'win' ? 'text-success' : 'text-destructive'}`}>
-                            {bet.result === 'win' ? (
-                              <TrendingUp className="h-4 w-4" />
-                            ) : (
-                              <TrendingDown className="h-4 w-4" />
-                            )}
-                            {bet.result.toUpperCase()}
+                            {bet.result === 'win' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                            {bet.result === 'win' ? 'VITÓRIA' : 'DERROTA'}
                           </div>
                         </TableCell>
                         <TableCell className={bet.profit >= 0 ? 'text-success' : 'text-destructive'}>
                           {bet.profit >= 0 ? '+' : ''}{formatBRL(bet.profit)}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {new Date(bet.timestamp).toLocaleString()}
+                          {new Date(bet.timestamp).toLocaleString('pt-BR')}
                         </TableCell>
                       </TableRow>
                     ))}

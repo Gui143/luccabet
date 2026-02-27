@@ -23,28 +23,16 @@ const Account: React.FC = () => {
   const totalProfit = bets.reduce((sum, bet) => sum + bet.profit, 0);
 
   const handleRedeemCode = async () => {
-    if (!redeemCode.trim()) {
-      toast.error('Digite um código');
-      return;
-    }
-
+    if (!redeemCode.trim()) { toast.error('Digite um código'); return; }
     setIsRedeeming(true);
-    
-    const { data, error } = await supabase.functions.invoke('redeem-code', {
-      body: { code: redeemCode.trim() }
-    });
-
-    if (error) {
-      toast.error(error.message || 'Erro ao resgatar código');
-    } else if (data?.error) {
-      toast.error(data.error);
-    } else if (data?.success) {
+    const { data, error } = await supabase.functions.invoke('redeem-code', { body: { code: redeemCode.trim() } });
+    if (error) { toast.error(error.message || 'Erro ao resgatar código'); }
+    else if (data?.error) { toast.error(data.error); }
+    else if (data?.success) {
       toast.success(`Código resgatado! +€ ${Number(data.bonus).toFixed(2)} adicionados ao seu saldo`);
       setRedeemCode('');
-      // Reload page to update balance
       window.location.reload();
     }
-
     setIsRedeeming(false);
   };
 
@@ -70,8 +58,7 @@ const Account: React.FC = () => {
             </div>
             <div>
               <div className="text-sm text-muted-foreground mb-1 flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email
+                <Mail className="h-4 w-4" /> Email
               </div>
               <div className="text-lg font-semibold">{user.email}</div>
             </div>
@@ -88,7 +75,7 @@ const Account: React.FC = () => {
               <TrendingUp className="h-6 w-6 text-primary" />
               Estatísticas
             </CardTitle>
-            <CardDescription>Resumo do seu desempenho em apostas</CardDescription>
+            <CardDescription>Resumo do seu desempenho</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -129,11 +116,7 @@ const Account: React.FC = () => {
                 className="mt-1"
               />
             </div>
-            <Button 
-              onClick={handleRedeemCode} 
-              disabled={isRedeeming}
-              className="w-full glow-primary"
-            >
+            <Button onClick={handleRedeemCode} disabled={isRedeeming} className="w-full">
               {isRedeeming ? 'Processando...' : 'Resgatar'}
             </Button>
           </CardContent>

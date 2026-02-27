@@ -26,18 +26,14 @@ const Auth: React.FC = () => {
     
     if (isLogin) {
       const success = await login(email, password);
-      if (success) {
-        navigate('/');
-      }
+      if (success) navigate('/');
     } else {
       if (!username || username.length < 3) {
-        toast.error('Username must be at least 3 characters');
+        toast.error('O nome de usuário deve ter pelo menos 3 caracteres');
         return;
       }
       const success = await signup(email, password, username);
-      if (success) {
-        navigate('/');
-      }
+      if (success) navigate('/');
     }
   };
 
@@ -46,33 +42,33 @@ const Auth: React.FC = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center glow-primary">
+            <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-2xl font-bold text-primary-foreground">LB</span>
             </div>
-            <h1 className="text-3xl font-bold text-gradient">LUCCABET</h1>
+            <h1 className="text-3xl font-extrabold text-gradient">LUCCABET</h1>
           </div>
-          <p className="text-muted-foreground">Plataforma 100% simulada</p>
+          <p className="text-muted-foreground">A melhor plataforma de apostas</p>
         </div>
 
         <Card className="card-gradient border-border">
           <CardHeader>
-            <CardTitle>{isLogin ? 'Welcome Back' : 'Create Account'}</CardTitle>
+            <CardTitle>{isLogin ? 'Entrar' : 'Criar Conta'}</CardTitle>
             <CardDescription>
-              {isLogin ? 'Sign in to your account' : 'Get started with $1000 free balance'}
+              {isLogin ? 'Acesse sua conta' : 'Comece com € 1000 de saldo inicial'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">Nome de Usuário</Label>
                   <Input
                     id="username"
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
-                    placeholder="Enter username"
+                    placeholder="Seu nome de usuário"
                     className="bg-input border-border"
                   />
                 </div>
@@ -86,27 +82,27 @@ const Auth: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="Enter email"
+                  placeholder="Seu email"
                   className="bg-input border-border"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Senha</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="Enter password"
+                  placeholder="Sua senha"
                   minLength={6}
                   className="bg-input border-border"
                 />
               </div>
 
-              <Button type="submit" className="w-full glow-primary">
-                {isLogin ? 'Sign In' : 'Sign Up'}
+              <Button type="submit" className="w-full">
+                {isLogin ? 'Entrar' : 'Criar Conta'}
               </Button>
 
               <div className="text-center">
@@ -115,7 +111,7 @@ const Auth: React.FC = () => {
                   onClick={() => setIsLogin(!isLogin)}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+                  {isLogin ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Entre'}
                 </button>
               </div>
             </form>
