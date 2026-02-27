@@ -1,32 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
 
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 50 100% 50%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 350 90% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 142 76% 36%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 55%;
 
-    --accent: 142 76% 45%;
+    --accent: 350 90% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -35,40 +33,48 @@ All colors MUST be HSL.
     --success: 142 76% 45%;
     --success-foreground: 0 0% 0%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 12%;
-    --ring: 50 100% 50%;
+    --border: 0 0% 14%;
+    --input: 0 0% 10%;
+    --ring: 350 90% 55%;
 
-    --radius: 0.75rem;
+    --radius: 0.625rem;
 
-    --glow-primary: 50 100% 50%;
-    --glow-secondary: 142 76% 36%;
-    --glow-accent: 142 76% 45%;
+    --glow-primary: 350 90% 55%;
+    --glow-accent: 350 90% 55%;
+  }
+
+  * {
+    @apply border-border;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
   }
 }
 
 @layer utilities {
   .glow-primary {
-    box-shadow: 0 0 20px hsl(var(--glow-primary) / 0.4);
+    box-shadow: 0 0 20px hsl(var(--glow-primary) / 0.3), 0 0 40px hsl(var(--glow-primary) / 0.1);
   }
-  
-  .glow-secondary {
-    box-shadow: 0 0 20px hsl(var(--glow-secondary) / 0.4);
-  }
-  
+
   .glow-accent {
-    box-shadow: 0 0 20px hsl(var(--glow-accent) / 0.4);
+    box-shadow: 0 0 20px hsl(var(--glow-accent) / 0.3);
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    background: linear-gradient(135deg, hsl(350 90% 55%), hsl(350 90% 70%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .card-gradient {
-    background: linear-gradient(135deg, hsl(var(--card)), hsl(0 0% 12%));
+    background: linear-gradient(145deg, hsl(0 0% 7%), hsl(0 0% 9%));
+  }
+
+  .bet-card {
+    @apply rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10;
   }
 
   .plane-glow {
@@ -81,22 +87,8 @@ All colors MUST be HSL.
       filter: drop-shadow(0 0 10px hsl(var(--primary)));
     }
     50% {
-      filter: drop-shadow(0 0 20px hsl(var(--primary))) drop-shadow(0 0 30px hsl(var(--accent)));
+      filter: drop-shadow(0 0 20px hsl(var(--primary))) drop-shadow(0 0 30px hsl(var(--primary)));
     }
-  }
-
-  .bet-card {
-    @apply rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/20;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
   }
 }
 

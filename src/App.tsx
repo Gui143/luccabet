@@ -12,7 +12,6 @@ import Mines from "./pages/games/Mines";
 import Slots from "./pages/games/Slots";
 import Roulette from "./pages/games/Roulette";
 import Aviator from "./pages/games/Aviator";
-import CrashDuplo from "./pages/games/CrashDuplo";
 import FortuneTiger from "./pages/games/FortuneTiger";
 import PenaltyBurrows from "./pages/games/PenaltyBurrows";
 import Wallet from "./pages/Wallet";
@@ -43,7 +42,6 @@ const App = () => (
               <Route path="/games/slots" element={<ProtectedRoute><Slots /></ProtectedRoute>} />
               <Route path="/games/roulette" element={<ProtectedRoute><Roulette /></ProtectedRoute>} />
               <Route path="/games/aviator" element={<ProtectedRoute><Aviator /></ProtectedRoute>} />
-              <Route path="/games/crash-duplo" element={<ProtectedRoute><CrashDuplo /></ProtectedRoute>} />
               <Route path="/games/fortune-tiger" element={<ProtectedRoute><FortuneTiger /></ProtectedRoute>} />
               <Route path="/games/penalty-burrows" element={<ProtectedRoute><PenaltyBurrows /></ProtectedRoute>} />
               <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
