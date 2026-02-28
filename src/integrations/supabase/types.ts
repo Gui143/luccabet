@@ -21,6 +21,8 @@ export type Database = {
           created_at: string
           game_id: string
           id: string
+          market_detail: Json | null
+          market_type: string
           odd: number
           potential_win: number
           selected_team: string
@@ -33,6 +35,8 @@ export type Database = {
           created_at?: string
           game_id: string
           id?: string
+          market_detail?: Json | null
+          market_type?: string
           odd: number
           potential_win: number
           selected_team: string
@@ -45,6 +49,8 @@ export type Database = {
           created_at?: string
           game_id?: string
           id?: string
+          market_detail?: Json | null
+          market_type?: string
           odd?: number
           potential_win?: number
           selected_team?: string
@@ -88,6 +94,128 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      cbfd_game_players: {
+        Row: {
+          created_at: string
+          game_id: string
+          id: string
+          player_id: string
+          team_side: string
+        }
+        Insert: {
+          created_at?: string
+          game_id: string
+          id?: string
+          player_id: string
+          team_side: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: string
+          id?: string
+          player_id?: string
+          team_side?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cbfd_game_players_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "cbfd_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cbfd_game_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "cbfd_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cbfd_game_results: {
+        Row: {
+          created_at: string
+          game_id: string
+          id: string
+          total_corners_a: number
+          total_corners_b: number
+          total_red_cards_a: number
+          total_red_cards_b: number
+          total_yellow_cards_a: number
+          total_yellow_cards_b: number
+        }
+        Insert: {
+          created_at?: string
+          game_id: string
+          id?: string
+          total_corners_a?: number
+          total_corners_b?: number
+          total_red_cards_a?: number
+          total_red_cards_b?: number
+          total_yellow_cards_a?: number
+          total_yellow_cards_b?: number
+        }
+        Update: {
+          created_at?: string
+          game_id?: string
+          id?: string
+          total_corners_a?: number
+          total_corners_b?: number
+          total_red_cards_a?: number
+          total_red_cards_b?: number
+          total_yellow_cards_a?: number
+          total_yellow_cards_b?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cbfd_game_results_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: true
+            referencedRelation: "cbfd_games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cbfd_game_scorers: {
+        Row: {
+          created_at: string
+          game_id: string
+          id: string
+          minute: number | null
+          player_id: string
+        }
+        Insert: {
+          created_at?: string
+          game_id: string
+          id?: string
+          minute?: number | null
+          player_id: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: string
+          id?: string
+          minute?: number | null
+          player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cbfd_game_scorers_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "cbfd_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cbfd_game_scorers_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "cbfd_players"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cbfd_games: {
         Row: {
@@ -143,6 +271,33 @@ export type Database = {
           team_a?: string
           team_b?: string
           winner_team?: string | null
+        }
+        Relationships: []
+      }
+      cbfd_players: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          photo_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          photo_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          photo_url?: string | null
         }
         Relationships: []
       }

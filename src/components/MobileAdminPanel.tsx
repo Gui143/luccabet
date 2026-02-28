@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Shield, Plus, Trash2, Users, DollarSign, CheckCircle, Calendar, Settings, Gift, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Trophy, Shield, Plus, Trash2, Users, DollarSign, CheckCircle, Calendar, Settings, Gift, ToggleLeft, ToggleRight, UserCircle, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import PlayersTab from '@/components/admin/PlayersTab';
 
 interface CBFDGame {
   id: string;
@@ -46,12 +48,19 @@ interface PromoCode {
   created_at: string;
 }
 
+interface CBFDPlayer {
+  id: string;
+  name: string;
+  is_active: boolean;
+}
+
 const MobileAdminPanel: React.FC = () => {
   const [cbfdGames, setCbfdGames] = useState<CBFDGame[]>([]);
   const [cbfdTeams, setCbfdTeams] = useState<CBFDTeam[]>([]);
   const [cbfdChampionships, setCbfdChampionships] = useState<CBFDChampionship[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+  const [allPlayers, setAllPlayers] = useState<CBFDPlayer[]>([]);
   
   // Form states
   const [newTeamName, setNewTeamName] = useState('');
@@ -64,6 +73,8 @@ const MobileAdminPanel: React.FC = () => {
   const [oddB, setOddB] = useState('');
   const [matchDate, setMatchDate] = useState('');
   const [matchTime, setMatchTime] = useState('');
+  const [selectedPlayersA, setSelectedPlayersA] = useState<string[]>([]);
+  const [selectedPlayersB, setSelectedPlayersB] = useState<string[]>([]);
   
   // Credit user
   const [username, setUsername] = useState('');
@@ -77,6 +88,14 @@ const MobileAdminPanel: React.FC = () => {
   const [scoreA, setScoreA] = useState('');
   const [scoreB, setScoreB] = useState('');
   const [isSettling, setIsSettling] = useState(false);
+  const [settleCornerA, setSettleCornerA] = useState('0');
+  const [settleCornerB, setSettleCornerB] = useState('0');
+  const [settleYellowA, setSettleYellowA] = useState('0');
+  const [settleYellowB, setSettleYellowB] = useState('0');
+  const [settleRedA, setSettleRedA] = useState('0');
+  const [settleRedB, setSettleRedB] = useState('0');
+  const [settleScorers, setSettleScorers] = useState<string[]>([]);
+  const [settleGamePlayers, setSettleGamePlayers] = useState<any[]>([]);
 
   const [isAddingTeam, setIsAddingTeam] = useState(false);
   const [isAddingChampionship, setIsAddingChampionship] = useState(false);
@@ -99,8 +118,18 @@ const MobileAdminPanel: React.FC = () => {
       loadCBFDGames(),
       loadCBFDTeams(),
       loadCBFDChampionships(),
-      loadPromoCodes()
+      loadPromoCodes(),
+      loadAllPlayers()
     ]);
+  };
+
+  const loadAllPlayers = async () => {
+    const { data } = await supabase
+      .from('cbfd_players')
+      .select('id, name, is_active')
+      .eq('is_active', true)
+      .order('name', { ascending: true });
+    if (data) setAllPlayers(data as CBFDPlayer[]);
   };
 
   const loadPromoCodes = async () => {
@@ -267,19 +296,28 @@ const MobileAdminPanel: React.FC = () => {
     }
 
     setIsAddingGame(true);
-    const { error } = await supabase.from('cbfd_games').insert({
+    const { data: gameData, error } = await supabase.from('cbfd_games').insert({
       team_a: teamA,
       team_b: teamB,
       odd_a: oddAVal,
       odd_draw: oddDrawVal,
       odd_b: oddBVal,
-      odd: oddAVal, // legacy field
+      odd: oddAVal,
       championship,
       match_date: matchDateTime
-    });
+    }).select().single();
 
     if (error) toast.error('Erro ao adicionar partida');
     else {
+      // Insert game players
+      const playerInserts = [
+        ...selectedPlayersA.map(pid => ({ game_id: gameData.id, player_id: pid, team_side: 'a' })),
+        ...selectedPlayersB.map(pid => ({ game_id: gameData.id, player_id: pid, team_side: 'b' })),
+      ];
+      if (playerInserts.length > 0) {
+        await supabase.from('cbfd_game_players').insert(playerInserts);
+      }
+
       toast.success('Partida adicionada!');
       setSelectedTeamA('');
       setSelectedTeamB('');
@@ -289,6 +327,8 @@ const MobileAdminPanel: React.FC = () => {
       setSelectedChampionship('');
       setMatchDate('');
       setMatchTime('');
+      setSelectedPlayersA([]);
+      setSelectedPlayersB([]);
       loadCBFDGames();
     }
     setIsAddingGame(false);
@@ -362,12 +402,26 @@ const MobileAdminPanel: React.FC = () => {
     }
   };
 
-  const openSettleDialog = (game: CBFDGame) => {
+  const openSettleDialog = async (game: CBFDGame) => {
     setSettlingGame(game);
     setWinnerTeam('');
     setScoreA('');
     setScoreB('');
+    setSettleCornerA('0');
+    setSettleCornerB('0');
+    setSettleYellowA('0');
+    setSettleYellowB('0');
+    setSettleRedA('0');
+    setSettleRedB('0');
+    setSettleScorers([]);
     setShowSettleDialog(true);
+
+    // Load game players for scorer selection
+    const { data: gp } = await supabase
+      .from('cbfd_game_players')
+      .select('id, player_id, team_side, player:cbfd_players(id, name)')
+      .eq('game_id', game.id);
+    setSettleGamePlayers(gp || []);
   };
 
   const handleSettleMatch = async () => {
@@ -378,12 +432,22 @@ const MobileAdminPanel: React.FC = () => {
 
     setIsSettling(true);
 
+    // Save detailed results first
+    const totalGoals = (scoreA ? parseInt(scoreA) : 0) + (scoreB ? parseInt(scoreB) : 0);
+
     const { data, error } = await supabase.functions.invoke('settle-match', {
       body: {
         game_id: settlingGame.id,
         winner_team: winnerTeam,
         score_a: scoreA ? parseInt(scoreA) : null,
-        score_b: scoreB ? parseInt(scoreB) : null
+        score_b: scoreB ? parseInt(scoreB) : null,
+        total_corners_a: parseInt(settleCornerA) || 0,
+        total_corners_b: parseInt(settleCornerB) || 0,
+        total_yellow_cards_a: parseInt(settleYellowA) || 0,
+        total_yellow_cards_b: parseInt(settleYellowB) || 0,
+        total_red_cards_a: parseInt(settleRedA) || 0,
+        total_red_cards_b: parseInt(settleRedB) || 0,
+        scorer_ids: settleScorers
       }
     });
 
@@ -408,20 +472,23 @@ const MobileAdminPanel: React.FC = () => {
       </div>
 
       <Tabs defaultValue="partidas" className="w-full">
-        <TabsList className="w-full grid grid-cols-5 h-auto gap-1 bg-muted/50 p-1">
-          <TabsTrigger value="partidas" className="text-xs py-2 px-1">
+        <TabsList className="w-full grid grid-cols-6 h-auto gap-1 bg-muted/50 p-1">
+          <TabsTrigger value="partidas" className="text-[10px] sm:text-xs py-2 px-1">
             Partidas
           </TabsTrigger>
-          <TabsTrigger value="times" className="text-xs py-2 px-1">
+          <TabsTrigger value="times" className="text-[10px] sm:text-xs py-2 px-1">
             Times
           </TabsTrigger>
-          <TabsTrigger value="campeonatos" className="text-xs py-2 px-1">
+          <TabsTrigger value="jogadores" className="text-[10px] sm:text-xs py-2 px-1">
+            Jogadores
+          </TabsTrigger>
+          <TabsTrigger value="campeonatos" className="text-[10px] sm:text-xs py-2 px-1">
             Ligas
           </TabsTrigger>
-          <TabsTrigger value="usuarios" className="text-xs py-2 px-1">
+          <TabsTrigger value="usuarios" className="text-[10px] sm:text-xs py-2 px-1">
             Usuários
           </TabsTrigger>
-          <TabsTrigger value="codigos" className="text-xs py-2 px-1">
+          <TabsTrigger value="codigos" className="text-[10px] sm:text-xs py-2 px-1">
             Códigos
           </TabsTrigger>
         </TabsList>
@@ -543,6 +610,43 @@ const MobileAdminPanel: React.FC = () => {
                 </div>
               </div>
 
+              {/* Player Selection */}
+              {allPlayers.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Jogadores do Time A</Label>
+                  <div className="max-h-32 overflow-y-auto space-y-1 border border-border rounded-lg p-2">
+                    {allPlayers.map(p => (
+                      <label key={p.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                        <Checkbox
+                          checked={selectedPlayersA.includes(p.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setSelectedPlayersA(prev => [...prev, p.id]);
+                            else setSelectedPlayersA(prev => prev.filter(id => id !== p.id));
+                          }}
+                        />
+                        {p.name}
+                      </label>
+                    ))}
+                  </div>
+
+                  <Label className="text-xs font-medium">Jogadores do Time B</Label>
+                  <div className="max-h-32 overflow-y-auto space-y-1 border border-border rounded-lg p-2">
+                    {allPlayers.map(p => (
+                      <label key={p.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                        <Checkbox
+                          checked={selectedPlayersB.includes(p.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setSelectedPlayersB(prev => [...prev, p.id]);
+                            else setSelectedPlayersB(prev => prev.filter(id => id !== p.id));
+                          }}
+                        />
+                        {p.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <Button onClick={handleAddGame} disabled={isAddingGame} className="w-full h-9 glow-primary">
                 <Plus className="h-4 w-4 mr-1" />
                 Adicionar Partida
@@ -623,6 +727,11 @@ const MobileAdminPanel: React.FC = () => {
               </div>
             ))}
           </div>
+        </TabsContent>
+
+        {/* JOGADORES */}
+        <TabsContent value="jogadores" className="mt-4">
+          <PlayersTab />
         </TabsContent>
 
         {/* CAMPEONATOS */}
@@ -821,7 +930,7 @@ const MobileAdminPanel: React.FC = () => {
 
       {/* Settlement Dialog */}
       <Dialog open={showSettleDialog} onOpenChange={setShowSettleDialog}>
-        <DialogContent className="max-w-md mx-4">
+        <DialogContent className="max-w-lg mx-4 max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg">Encerrar Partida</DialogTitle>
             <DialogDescription>
@@ -829,7 +938,8 @@ const MobileAdminPanel: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 pt-4">
+          <div className="space-y-4 pt-2">
+            {/* Winner */}
             <div className="space-y-2">
               <Label>Vencedor</Label>
               <Select value={winnerTeam} onValueChange={setWinnerTeam}>
@@ -838,35 +948,92 @@ const MobileAdminPanel: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={settlingGame?.team_a || ''}>{settlingGame?.team_a}</SelectItem>
+                  <SelectItem value="draw">Empate</SelectItem>
                   <SelectItem value={settlingGame?.team_b || ''}>{settlingGame?.team_b}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
+            {/* Score */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Placar {settlingGame?.team_a}</Label>
-                <Input
-                  type="number"
-                  value={scoreA}
-                  onChange={(e) => setScoreA(e.target.value)}
-                  placeholder="0"
-                  min="0"
-                  className="h-10 mt-1"
-                />
+                <Input type="number" value={scoreA} onChange={(e) => setScoreA(e.target.value)} placeholder="0" min="0" className="h-9 mt-1" />
               </div>
               <div>
                 <Label className="text-xs">Placar {settlingGame?.team_b}</Label>
-                <Input
-                  type="number"
-                  value={scoreB}
-                  onChange={(e) => setScoreB(e.target.value)}
-                  placeholder="0"
-                  min="0"
-                  className="h-10 mt-1"
-                />
+                <Input type="number" value={scoreB} onChange={(e) => setScoreB(e.target.value)} placeholder="0" min="0" className="h-9 mt-1" />
               </div>
             </div>
+
+            {/* Corners */}
+            <div>
+              <Label className="text-xs font-medium">Escanteios</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">{settlingGame?.team_a}</Label>
+                  <Input type="number" value={settleCornerA} onChange={(e) => setSettleCornerA(e.target.value)} min="0" className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">{settlingGame?.team_b}</Label>
+                  <Input type="number" value={settleCornerB} onChange={(e) => setSettleCornerB(e.target.value)} min="0" className="h-8" />
+                </div>
+              </div>
+            </div>
+
+            {/* Yellow Cards */}
+            <div>
+              <Label className="text-xs font-medium">Cartões Amarelos</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">{settlingGame?.team_a}</Label>
+                  <Input type="number" value={settleYellowA} onChange={(e) => setSettleYellowA(e.target.value)} min="0" className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">{settlingGame?.team_b}</Label>
+                  <Input type="number" value={settleYellowB} onChange={(e) => setSettleYellowB(e.target.value)} min="0" className="h-8" />
+                </div>
+              </div>
+            </div>
+
+            {/* Red Cards */}
+            <div>
+              <Label className="text-xs font-medium">Cartões Vermelhos</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">{settlingGame?.team_a}</Label>
+                  <Input type="number" value={settleRedA} onChange={(e) => setSettleRedA(e.target.value)} min="0" className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">{settlingGame?.team_b}</Label>
+                  <Input type="number" value={settleRedB} onChange={(e) => setSettleRedB(e.target.value)} min="0" className="h-8" />
+                </div>
+              </div>
+            </div>
+
+            {/* Scorers */}
+            {settleGamePlayers.length > 0 && (
+              <div>
+                <Label className="text-xs font-medium">Goleadores</Label>
+                <div className="max-h-40 overflow-y-auto space-y-1 mt-1 border border-border rounded-lg p-2">
+                  {settleGamePlayers.map((gp: any) => {
+                    const playerData = Array.isArray(gp.player) ? gp.player[0] : gp.player;
+                    return (
+                      <label key={gp.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                        <Checkbox
+                          checked={settleScorers.includes(gp.player_id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setSettleScorers(prev => [...prev, gp.player_id]);
+                            else setSettleScorers(prev => prev.filter(id => id !== gp.player_id));
+                          }}
+                        />
+                        {playerData?.name} <span className="text-muted-foreground">({gp.team_side === 'a' ? settlingGame?.team_a : settlingGame?.team_b})</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <Button 
               onClick={handleSettleMatch} 
