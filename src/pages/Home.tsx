@@ -4,7 +4,7 @@ import { Gamepad2, Zap, Trophy, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
-import CBFDBetting from '@/components/CBFDBetting';
+import BettingMarkets from '@/components/betting/BettingMarkets';
 
 const Home: React.FC = () => {
   const gameCategories = [
@@ -34,7 +34,7 @@ const Home: React.FC = () => {
   return (
     <Layout>
       <div className="space-y-6 sm:space-y-8">
-        <CBFDBetting />
+        <BettingMarkets />
 
         <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-card via-card to-muted border border-border p-4 sm:p-8 md:p-12">
           <div className="relative z-10">
