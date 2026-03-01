@@ -100,7 +100,7 @@ const Wallet: React.FC = () => {
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Plus className="h-5 w-5 text-success" /> Depósito
                   </CardTitle>
-                  <CardDescription>Mín: R$ {WALLET_LIMITS.MIN_DEPOSIT} | Máx: R$ {WALLET_LIMITS.MAX_DEPOSIT}</CardDescription>
+                  <CardDescription>Mín: R$ 1 — Sem limite máximo</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Input type="number" placeholder="Valor do depósito" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} min={WALLET_LIMITS.MIN_DEPOSIT} max={WALLET_LIMITS.MAX_DEPOSIT} className="bg-input" />
@@ -120,7 +120,7 @@ const Wallet: React.FC = () => {
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Minus className="h-5 w-5 text-destructive" /> Saque
                   </CardTitle>
-                  <CardDescription>Mín: R$ {WALLET_LIMITS.MIN_WITHDRAW} | Máx: R$ {WALLET_LIMITS.MAX_WITHDRAW}</CardDescription>
+                  <CardDescription>Sem limites — saque qualquer valor</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Input type="number" placeholder="Valor do saque" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} className="bg-input" />
