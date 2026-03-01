@@ -146,12 +146,12 @@ export class WalletAPI {
   }
 }
 
-// Wallet limits and constraints (should be fetched from backend in production)
+// Wallet limits and constraints — no withdrawal cap
 export const WALLET_LIMITS = {
-  MIN_DEPOSIT: 10,
-  MAX_DEPOSIT: 10000,
-  MIN_WITHDRAW: 20,
-  MAX_WITHDRAW: 50000,
-  DAILY_WITHDRAW_LIMIT: 100000,
-  MAX_PENDING_TRANSACTIONS: 5
+  MIN_DEPOSIT: 1,
+  MAX_DEPOSIT: 999999999,
+  MIN_WITHDRAW: 1,
+  MAX_WITHDRAW: 999999999,
+  DAILY_WITHDRAW_LIMIT: 999999999,
+  MAX_PENDING_TRANSACTIONS: 50
 };
