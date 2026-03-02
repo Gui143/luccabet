@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatBRLShort } from '@/lib/formatCurrency';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 type GamePhase = 'waiting' | 'countdown' | 'flying' | 'crashed';
 
@@ -15,6 +16,13 @@ interface BetSlot {
   placed: boolean;
   cashoutMultiplier: number | null;
   autoCashout: string;
+}
+
+interface AviatorRound {
+  id: string;
+  crash_point: number;
+  started_at: string | null;
+  status: string;
 }
 
 const INITIAL_BET: BetSlot = { amount: '10', placed: false, cashoutMultiplier: null, autoCashout: '' };
@@ -26,6 +34,9 @@ const Aviator: React.FC = () => {
   const multiplierRef = useRef(1.00);
   const crashPointRef = useRef(2.00);
   const phaseRef = useRef<GamePhase>('waiting');
+  const startedAtRef = useRef<number>(0);
+  const roundIdRef = useRef<string>('');
+  const hasCrashedRef = useRef(false);
 
   const [gamePhase, setGamePhase] = useState<GamePhase>('waiting');
   const [currentMultiplier, setCurrentMultiplier] = useState(1.00);
@@ -33,83 +44,60 @@ const Aviator: React.FC = () => {
   const [countdown, setCountdown] = useState(5);
   const [history, setHistory] = useState<number[]>([]);
 
-  // Dual bet slots
   const [bet1, setBet1] = useState<BetSlot>({ ...INITIAL_BET });
   const [bet2, setBet2] = useState<BetSlot>({ ...INITIAL_BET, amount: '20' });
 
-  // Adjusted crash algorithm — harder to reach high multipliers
-  const generateCrashPoint = () => {
-    const houseEdge = 0.06; // 6% house edge (harder)
-    const r = Math.random();
-    // Instant crash 8% of the time
-    if (r < 0.08) return 1.00;
-    const adjusted = (r - 0.08) / 0.92;
-    const raw = 1 / (1 - adjusted * (1 - houseEdge));
-    // Cap at 100x, with heavy bias toward low multipliers
-    return Math.min(100, Math.max(1.01, raw));
+  // Call edge function
+  const callController = async (action: string) => {
+    const { data, error } = await supabase.functions.invoke('aviator-controller', {
+      body: { action }
+    });
+    if (error) throw error;
+    return data;
   };
 
-  const startCountdown = useCallback(() => {
-    phaseRef.current = 'countdown';
-    setGamePhase('countdown');
-    setCountdown(5);
-    setBet1(b => ({ ...b, cashoutMultiplier: null }));
-    setBet2(b => ({ ...b, cashoutMultiplier: null }));
-
-    let c = 5;
-    const timer = setInterval(() => {
-      c--;
-      setCountdown(c);
-      if (c <= 0) {
-        clearInterval(timer);
-        startFlight();
-      }
-    }, 1000);
-  }, []);
-
-  const startFlight = useCallback(() => {
-    const crash = generateCrashPoint();
-    crashPointRef.current = crash;
-    setCrashPoint(crash);
+  // Start local flight animation synced to server start time
+  const startLocalAnimation = useCallback((crashPt: number, serverStartedAt: string) => {
+    const serverStart = new Date(serverStartedAt).getTime();
+    startedAtRef.current = serverStart;
+    crashPointRef.current = crashPt;
     multiplierRef.current = 1.00;
     setCurrentMultiplier(1.00);
     phaseRef.current = 'flying';
     setGamePhase('flying');
-
-    const startTime = Date.now();
+    hasCrashedRef.current = false;
 
     const animate = () => {
-      const elapsed = Date.now() - startTime;
-      // Speed: multiplier grows exponentially
+      if (hasCrashedRef.current) return;
+      const elapsed = Date.now() - serverStart;
       const t = elapsed / 1000;
-      const mult = Math.pow(Math.E, 0.08 * t); // e^(0.08t) — smooth exponential
+      const mult = Math.pow(Math.E, 0.08 * t);
       multiplierRef.current = mult;
       setCurrentMultiplier(mult);
+      drawCanvas(mult, crashPt, false);
 
-      drawCanvas(mult, crash, false);
-
-      if (mult >= crash) {
-        handleCrash(crash);
+      if (mult >= crashPt) {
+        handleLocalCrash(crashPt);
         return;
       }
-
       animationRef.current = requestAnimationFrame(animate);
     };
-
     animationRef.current = requestAnimationFrame(animate);
   }, []);
 
-  const handleCrash = useCallback((crash: number) => {
+  const handleLocalCrash = useCallback((crash: number) => {
+    if (hasCrashedRef.current) return;
+    hasCrashedRef.current = true;
     phaseRef.current = 'crashed';
     setGamePhase('crashed');
+    setCrashPoint(crash);
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
-
     drawCanvas(crash, crash, true);
 
     // Resolve bets
     [
-      { bet: bet1, setBet: setBet1, label: '1' },
-      { bet: bet2, setBet: setBet2, label: '2' },
+      { bet: bet1, setBet: setBet1 },
+      { bet: bet2, setBet: setBet2 },
     ].forEach(({ bet, setBet }) => {
       if (bet.placed && !bet.cashoutMultiplier) {
         const amt = parseFloat(bet.amount);
@@ -123,27 +111,107 @@ const Aviator: React.FC = () => {
     toast.error(`💥 Crashed at ${crash.toFixed(2)}x!`);
     setHistory(h => [crash, ...h].slice(0, 20));
 
-    setTimeout(() => {
-      phaseRef.current = 'waiting';
-      setGamePhase('waiting');
-      // Auto-restart if any bet placed
-      if (bet1.placed || bet2.placed) {
-        startCountdown();
+    // Tell server to crash + create next round
+    callController('crash').catch(console.error);
+  }, [bet1, bet2, addBet]);
+
+  // Subscribe to realtime changes on aviator_rounds
+  useEffect(() => {
+    // Initial: get or create round
+    callController('get_or_create_round').then(data => {
+      if (data?.round) {
+        roundIdRef.current = data.round.id;
+        const round = data.round as AviatorRound;
+        if (round.status === 'flying' && round.started_at) {
+          crashPointRef.current = Number(round.crash_point);
+          setCrashPoint(Number(round.crash_point));
+          startLocalAnimation(Number(round.crash_point), round.started_at);
+        } else if (round.status === 'countdown') {
+          phaseRef.current = 'countdown';
+          setGamePhase('countdown');
+        }
       }
-    }, 3000);
-  }, [bet1, bet2, addBet, startCountdown]);
+    }).catch(console.error);
+
+    // Load history
+    supabase
+      .from('aviator_rounds')
+      .select('crash_point')
+      .eq('status', 'crashed')
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (data) setHistory(data.map(r => Number(r.crash_point)));
+      });
+
+    const channel = supabase
+      .channel('aviator-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'aviator_rounds' },
+        (payload) => {
+          const round = payload.new as AviatorRound;
+          if (!round) return;
+
+          if (round.status === 'waiting') {
+            roundIdRef.current = round.id;
+            phaseRef.current = 'waiting';
+            setGamePhase('waiting');
+            setBet1(b => ({ ...b, cashoutMultiplier: null }));
+            setBet2(b => ({ ...b, cashoutMultiplier: null }));
+          }
+
+          if (round.status === 'countdown') {
+            roundIdRef.current = round.id;
+            phaseRef.current = 'countdown';
+            setGamePhase('countdown');
+            setCountdown(5);
+            let c = 5;
+            const timer = setInterval(() => {
+              c--;
+              setCountdown(c);
+              if (c <= 0) {
+                clearInterval(timer);
+                // First client to reach 0 triggers flight
+                callController('start_flight').catch(() => {});
+              }
+            }, 1000);
+          }
+
+          if (round.status === 'flying' && round.started_at) {
+            if (phaseRef.current !== 'flying') {
+              crashPointRef.current = Number(round.crash_point);
+              setCrashPoint(Number(round.crash_point));
+              startLocalAnimation(Number(round.crash_point), round.started_at);
+            }
+          }
+
+          if (round.status === 'crashed') {
+            if (phaseRef.current !== 'crashed') {
+              handleLocalCrash(Number(round.crash_point));
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, []);
 
   // Auto cashout check
   useEffect(() => {
     if (gamePhase !== 'flying') return;
-    const checkAuto = (bet: BetSlot, cashout: (idx: number) => void, idx: number) => {
+    const checkAuto = (bet: BetSlot, idx: number) => {
       if (bet.placed && !bet.cashoutMultiplier && bet.autoCashout) {
         const target = parseFloat(bet.autoCashout);
-        if (!isNaN(target) && currentMultiplier >= target) cashout(idx);
+        if (!isNaN(target) && currentMultiplier >= target) doCashout(idx);
       }
     };
-    checkAuto(bet1, () => doCashout(1), 1);
-    checkAuto(bet2, () => doCashout(2), 2);
+    checkAuto(bet1, 1);
+    checkAuto(bet2, 2);
   }, [currentMultiplier, gamePhase]);
 
   const placeBet = (slotIdx: number) => {
@@ -157,7 +225,10 @@ const Aviator: React.FC = () => {
     setBet(b => ({ ...b, placed: true }));
     toast.success(`Aposta ${slotIdx}: ${formatBRLShort(amount)}`);
 
-    if (gamePhase === 'waiting') startCountdown();
+    // If waiting, trigger countdown
+    if (gamePhase === 'waiting') {
+      callController('start_countdown').catch(console.error);
+    }
   };
 
   const doCashout = (slotIdx: number) => {
@@ -183,11 +254,9 @@ const Aviator: React.FC = () => {
     if (!ctx) return;
     const W = canvas.width, H = canvas.height;
 
-    // Background
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, W, H);
 
-    // Grid
     ctx.strokeStyle = 'rgba(225,6,0,0.12)';
     ctx.lineWidth = 1;
     for (let i = 1; i < 10; i++) {
@@ -197,7 +266,6 @@ const Aviator: React.FC = () => {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     }
 
-    // Curve
     const maxMult = Math.max(crash, multiplier, 2);
     const progress = Math.min((multiplier - 1) / (maxMult - 1), 1);
     const points: [number, number][] = [];
@@ -219,7 +287,6 @@ const Aviator: React.FC = () => {
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Gradient fill under curve
     if (points.length > 1) {
       ctx.beginPath();
       ctx.moveTo(points[0][0], H);
@@ -233,7 +300,6 @@ const Aviator: React.FC = () => {
       ctx.fill();
     }
 
-    // Airplane (only while flying)
     if (!crashed && points.length > 1) {
       const [px, py] = points[points.length - 1];
       const [px2, py2] = points.length > 3 ? points[points.length - 4] : points[0];
@@ -243,7 +309,6 @@ const Aviator: React.FC = () => {
       ctx.translate(px, py);
       ctx.rotate(-angle);
 
-      // Engine trail particles
       for (let i = 0; i < 8; i++) {
         const alpha = 0.6 - i * 0.07;
         const size = 4 - i * 0.4;
@@ -253,7 +318,6 @@ const Aviator: React.FC = () => {
         ctx.fill();
       }
 
-      // Fuselage
       ctx.shadowBlur = 25;
       ctx.shadowColor = 'rgba(255,0,0,0.8)';
       ctx.fillStyle = '#e10600';
@@ -261,21 +325,18 @@ const Aviator: React.FC = () => {
       ctx.ellipse(0, 0, 22, 7, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Wings
       ctx.fillStyle = '#cc0500';
       ctx.beginPath();
       ctx.moveTo(-8, 0); ctx.lineTo(-22, 14); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
       ctx.beginPath();
       ctx.moveTo(-8, 0); ctx.lineTo(-22, -14); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
 
-      // Tail
       ctx.fillStyle = '#b00400';
       ctx.beginPath();
       ctx.moveTo(-18, 0); ctx.lineTo(-26, 8); ctx.lineTo(-22, 0); ctx.closePath(); ctx.fill();
       ctx.beginPath();
       ctx.moveTo(-18, 0); ctx.lineTo(-26, -8); ctx.lineTo(-22, 0); ctx.closePath(); ctx.fill();
 
-      // Cockpit
       ctx.fillStyle = '#ffffff';
       ctx.shadowBlur = 10;
       ctx.shadowColor = 'rgba(255,255,255,0.6)';
@@ -287,7 +348,6 @@ const Aviator: React.FC = () => {
       ctx.restore();
     }
 
-    // Crash explosion
     if (crashed && points.length > 1) {
       const [px, py] = points[points.length - 1];
       for (let i = 0; i < 12; i++) {
@@ -401,11 +461,11 @@ const Aviator: React.FC = () => {
             <CardTitle className="flex items-center gap-2">
               <Plane className="h-6 w-6 text-primary" />
               Aviator
+              <span className="text-xs font-normal text-muted-foreground ml-2">🔴 LIVE</span>
             </CardTitle>
-            <CardDescription>Retire antes do avião cair!</CardDescription>
+            <CardDescription>Retire antes do avião cair! Sincronizado em tempo real.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* History */}
             {history.length > 0 && (
               <div className="flex gap-1.5 overflow-x-auto pb-1">
                 {history.map((h, i) => (
@@ -421,7 +481,6 @@ const Aviator: React.FC = () => {
               </div>
             )}
 
-            {/* Canvas */}
             <div className="relative bg-card border border-border rounded-lg overflow-hidden">
               <canvas ref={canvasRef} className="w-full h-[280px] sm:h-[340px]" style={{ imageRendering: 'auto' }} />
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -453,7 +512,6 @@ const Aviator: React.FC = () => {
               </div>
             </div>
 
-            {/* Dual bet panels */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {renderBetPanel(1, bet1, setBet1)}
               {renderBetPanel(2, bet2, setBet2)}

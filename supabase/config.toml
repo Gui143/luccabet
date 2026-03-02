@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.settle-match]
 verify_jwt = true
+
+[functions.aviator-controller]
+verify_jwt = false
