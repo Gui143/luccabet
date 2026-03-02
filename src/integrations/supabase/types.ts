@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      aviator_rounds: {
+        Row: {
+          crash_point: number
+          created_at: string
+          id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          crash_point: number
+          created_at?: string
+          id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          crash_point?: number
+          created_at?: string
+          id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       cbfd_bets: {
         Row: {
           amount: number
