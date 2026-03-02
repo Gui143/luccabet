@@ -18,13 +18,6 @@ interface BetSlot {
   autoCashout: string;
 }
 
-interface AviatorRound {
-  id: string;
-  crash_point: number;
-  started_at: string | null;
-  status: string;
-}
-
 const INITIAL_BET: BetSlot = { amount: '10', placed: false, cashoutMultiplier: null, autoCashout: '' };
 
 const Aviator: React.FC = () => {
@@ -34,20 +27,22 @@ const Aviator: React.FC = () => {
   const multiplierRef = useRef(1.00);
   const crashPointRef = useRef(2.00);
   const phaseRef = useRef<GamePhase>('waiting');
-  const startedAtRef = useRef<number>(0);
-  const roundIdRef = useRef<string>('');
   const hasCrashedRef = useRef(false);
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval>>();
 
   const [gamePhase, setGamePhase] = useState<GamePhase>('waiting');
   const [currentMultiplier, setCurrentMultiplier] = useState(1.00);
   const [crashPoint, setCrashPoint] = useState(2.00);
   const [countdown, setCountdown] = useState(5);
   const [history, setHistory] = useState<number[]>([]);
-
   const [bet1, setBet1] = useState<BetSlot>({ ...INITIAL_BET });
   const [bet2, setBet2] = useState<BetSlot>({ ...INITIAL_BET, amount: '20' });
 
-  // Call edge function
+  const bet1Ref = useRef(bet1);
+  const bet2Ref = useRef(bet2);
+  useEffect(() => { bet1Ref.current = bet1; }, [bet1]);
+  useEffect(() => { bet2Ref.current = bet2; }, [bet2]);
+
   const callController = async (action: string) => {
     const { data, error } = await supabase.functions.invoke('aviator-controller', {
       body: { action }
@@ -56,16 +51,44 @@ const Aviator: React.FC = () => {
     return data;
   };
 
-  // Start local flight animation synced to server start time
+  const startLocalCountdown = useCallback(() => {
+    if (phaseRef.current === 'countdown') return; // already counting
+    phaseRef.current = 'countdown';
+    setGamePhase('countdown');
+    setCountdown(5);
+    setBet1(b => ({ ...b, cashoutMultiplier: null }));
+    setBet2(b => ({ ...b, cashoutMultiplier: null }));
+
+    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+    let c = 5;
+    countdownTimerRef.current = setInterval(() => {
+      c--;
+      setCountdown(c);
+      if (c <= 0) {
+        clearInterval(countdownTimerRef.current!);
+        // Trigger flight on server
+        callController('start_flight').then(data => {
+          if (data?.started_at && data?.crash_point) {
+            startLocalAnimation(Number(data.crash_point), data.started_at);
+          }
+        }).catch(err => {
+          console.log('start_flight already handled by another client', err);
+        });
+      }
+    }, 1000);
+  }, []);
+
   const startLocalAnimation = useCallback((crashPt: number, serverStartedAt: string) => {
+    if (phaseRef.current === 'flying') return; // already flying
     const serverStart = new Date(serverStartedAt).getTime();
-    startedAtRef.current = serverStart;
     crashPointRef.current = crashPt;
     multiplierRef.current = 1.00;
     setCurrentMultiplier(1.00);
+    setCrashPoint(crashPt);
     phaseRef.current = 'flying';
     setGamePhase('flying');
     hasCrashedRef.current = false;
+    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
 
     const animate = () => {
       if (hasCrashedRef.current) return;
@@ -94,10 +117,10 @@ const Aviator: React.FC = () => {
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
     drawCanvas(crash, crash, true);
 
-    // Resolve bets
+    // Resolve bets using refs for latest values
     [
-      { bet: bet1, setBet: setBet1 },
-      { bet: bet2, setBet: setBet2 },
+      { bet: bet1Ref.current, setBet: setBet1 },
+      { bet: bet2Ref.current, setBet: setBet2 },
     ].forEach(({ bet, setBet }) => {
       if (bet.placed && !bet.cashoutMultiplier) {
         const amt = parseFloat(bet.amount);
@@ -113,23 +136,24 @@ const Aviator: React.FC = () => {
 
     // Tell server to crash + create next round
     callController('crash').catch(console.error);
-  }, [bet1, bet2, addBet]);
 
-  // Subscribe to realtime changes on aviator_rounds
+    // Auto-transition to waiting after 3s
+    setTimeout(() => {
+      phaseRef.current = 'waiting';
+      setGamePhase('waiting');
+    }, 3000);
+  }, [addBet]);
+
+  // Subscribe to realtime
   useEffect(() => {
-    // Initial: get or create round
+    // Initial load
     callController('get_or_create_round').then(data => {
-      if (data?.round) {
-        roundIdRef.current = data.round.id;
-        const round = data.round as AviatorRound;
-        if (round.status === 'flying' && round.started_at) {
-          crashPointRef.current = Number(round.crash_point);
-          setCrashPoint(Number(round.crash_point));
-          startLocalAnimation(Number(round.crash_point), round.started_at);
-        } else if (round.status === 'countdown') {
-          phaseRef.current = 'countdown';
-          setGamePhase('countdown');
-        }
+      if (!data?.round) return;
+      const round = data.round;
+      if (round.status === 'flying' && round.started_at) {
+        startLocalAnimation(Number(round.crash_point), round.started_at);
+      } else if (round.status === 'countdown') {
+        startLocalCountdown();
       }
     }).catch(console.error);
 
@@ -150,46 +174,26 @@ const Aviator: React.FC = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'aviator_rounds' },
         (payload) => {
-          const round = payload.new as AviatorRound;
-          if (!round) return;
+          const round = payload.new as any;
+          if (!round?.status) return;
 
-          if (round.status === 'waiting') {
-            roundIdRef.current = round.id;
+          if (round.status === 'waiting' && phaseRef.current !== 'waiting') {
             phaseRef.current = 'waiting';
             setGamePhase('waiting');
             setBet1(b => ({ ...b, cashoutMultiplier: null }));
             setBet2(b => ({ ...b, cashoutMultiplier: null }));
           }
 
-          if (round.status === 'countdown') {
-            roundIdRef.current = round.id;
-            phaseRef.current = 'countdown';
-            setGamePhase('countdown');
-            setCountdown(5);
-            let c = 5;
-            const timer = setInterval(() => {
-              c--;
-              setCountdown(c);
-              if (c <= 0) {
-                clearInterval(timer);
-                // First client to reach 0 triggers flight
-                callController('start_flight').catch(() => {});
-              }
-            }, 1000);
+          if (round.status === 'countdown' && phaseRef.current !== 'countdown' && phaseRef.current !== 'flying') {
+            startLocalCountdown();
           }
 
-          if (round.status === 'flying' && round.started_at) {
-            if (phaseRef.current !== 'flying') {
-              crashPointRef.current = Number(round.crash_point);
-              setCrashPoint(Number(round.crash_point));
-              startLocalAnimation(Number(round.crash_point), round.started_at);
-            }
+          if (round.status === 'flying' && round.started_at && phaseRef.current !== 'flying') {
+            startLocalAnimation(Number(round.crash_point), round.started_at);
           }
 
-          if (round.status === 'crashed') {
-            if (phaseRef.current !== 'crashed') {
-              handleLocalCrash(Number(round.crash_point));
-            }
+          if (round.status === 'crashed' && phaseRef.current !== 'crashed') {
+            handleLocalCrash(Number(round.crash_point));
           }
         }
       )
@@ -198,20 +202,21 @@ const Aviator: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     };
   }, []);
 
-  // Auto cashout check
+  // Auto cashout
   useEffect(() => {
     if (gamePhase !== 'flying') return;
-    const checkAuto = (bet: BetSlot, idx: number) => {
-      if (bet.placed && !bet.cashoutMultiplier && bet.autoCashout) {
-        const target = parseFloat(bet.autoCashout);
-        if (!isNaN(target) && currentMultiplier >= target) doCashout(idx);
-      }
-    };
-    checkAuto(bet1, 1);
-    checkAuto(bet2, 2);
+    if (bet1.placed && !bet1.cashoutMultiplier && bet1.autoCashout) {
+      const target = parseFloat(bet1.autoCashout);
+      if (!isNaN(target) && currentMultiplier >= target) doCashout(1);
+    }
+    if (bet2.placed && !bet2.cashoutMultiplier && bet2.autoCashout) {
+      const target = parseFloat(bet2.autoCashout);
+      if (!isNaN(target) && currentMultiplier >= target) doCashout(2);
+    }
   }, [currentMultiplier, gamePhase]);
 
   const placeBet = (slotIdx: number) => {
@@ -225,9 +230,13 @@ const Aviator: React.FC = () => {
     setBet(b => ({ ...b, placed: true }));
     toast.success(`Aposta ${slotIdx}: ${formatBRLShort(amount)}`);
 
-    // If waiting, trigger countdown
     if (gamePhase === 'waiting') {
-      callController('start_countdown').catch(console.error);
+      callController('start_countdown').then(() => {
+        startLocalCountdown();
+      }).catch(err => {
+        console.log('Countdown already started', err);
+        startLocalCountdown();
+      });
     }
   };
 
@@ -246,7 +255,7 @@ const Aviator: React.FC = () => {
     toast.success(`✈️ Aposta ${slotIdx}: ${mult.toFixed(2)}x → ${formatBRLShort(win)}`);
   };
 
-  // Canvas drawing
+  // Canvas drawing (unchanged)
   const drawCanvas = (multiplier: number, crash: number, crashed: boolean) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -304,11 +313,9 @@ const Aviator: React.FC = () => {
       const [px, py] = points[points.length - 1];
       const [px2, py2] = points.length > 3 ? points[points.length - 4] : points[0];
       const angle = Math.atan2(py2 - py, px - px2);
-
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(-angle);
-
       for (let i = 0; i < 8; i++) {
         const alpha = 0.6 - i * 0.07;
         const size = 4 - i * 0.4;
@@ -317,33 +324,24 @@ const Aviator: React.FC = () => {
         ctx.arc(-22 - i * 7 + Math.random() * 3, (Math.random() - 0.5) * 6, Math.max(0.5, size), 0, Math.PI * 2);
         ctx.fill();
       }
-
       ctx.shadowBlur = 25;
       ctx.shadowColor = 'rgba(255,0,0,0.8)';
       ctx.fillStyle = '#e10600';
       ctx.beginPath();
       ctx.ellipse(0, 0, 22, 7, 0, 0, Math.PI * 2);
       ctx.fill();
-
       ctx.fillStyle = '#cc0500';
-      ctx.beginPath();
-      ctx.moveTo(-8, 0); ctx.lineTo(-22, 14); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(-8, 0); ctx.lineTo(-22, -14); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
-
+      ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-22, 14); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-22, -14); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
       ctx.fillStyle = '#b00400';
-      ctx.beginPath();
-      ctx.moveTo(-18, 0); ctx.lineTo(-26, 8); ctx.lineTo(-22, 0); ctx.closePath(); ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(-18, 0); ctx.lineTo(-26, -8); ctx.lineTo(-22, 0); ctx.closePath(); ctx.fill();
-
+      ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(-26, 8); ctx.lineTo(-22, 0); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(-26, -8); ctx.lineTo(-22, 0); ctx.closePath(); ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.shadowBlur = 10;
       ctx.shadowColor = 'rgba(255,255,255,0.6)';
       ctx.beginPath();
       ctx.ellipse(16, 0, 5, 4, 0, 0, Math.PI * 2);
       ctx.fill();
-
       ctx.shadowBlur = 0;
       ctx.restore();
     }
@@ -361,7 +359,6 @@ const Aviator: React.FC = () => {
     }
   };
 
-  // Canvas resize
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -394,59 +391,23 @@ const Aviator: React.FC = () => {
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-muted-foreground">Valor (R$)</label>
-            <Input
-              type="number"
-              value={bet.amount}
-              onChange={(e) => setBet(b => ({ ...b, amount: e.target.value }))}
-              disabled={bet.placed || gamePhase === 'flying'}
-              className="bg-input h-9 text-sm"
-              min="1"
-            />
+            <Input type="number" value={bet.amount} onChange={(e) => setBet(b => ({ ...b, amount: e.target.value }))} disabled={bet.placed || gamePhase === 'flying'} className="bg-input h-9 text-sm" min="1" />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Auto Cashout</label>
-            <Input
-              type="number"
-              value={bet.autoCashout}
-              onChange={(e) => setBet(b => ({ ...b, autoCashout: e.target.value }))}
-              placeholder="2.00"
-              className="bg-input h-9 text-sm"
-              min="1.01"
-              step="0.01"
-            />
+            <Input type="number" value={bet.autoCashout} onChange={(e) => setBet(b => ({ ...b, autoCashout: e.target.value }))} placeholder="2.00" className="bg-input h-9 text-sm" min="1.01" step="0.01" />
           </div>
         </div>
         <div className="flex gap-1">
           {[5, 10, 50, 100].map(v => (
-            <Button
-              key={v}
-              onClick={() => setBet(b => ({ ...b, amount: v.toString() }))}
-              variant="outline"
-              size="sm"
-              disabled={bet.placed || gamePhase === 'flying'}
-              className="flex-1 h-7 text-xs"
-            >
-              {v}
-            </Button>
+            <Button key={v} onClick={() => setBet(b => ({ ...b, amount: v.toString() }))} variant="outline" size="sm" disabled={bet.placed || gamePhase === 'flying'} className="flex-1 h-7 text-xs">{v}</Button>
           ))}
         </div>
         {!bet.placed ? (
-          <Button
-            onClick={() => placeBet(slotIdx)}
-            disabled={gamePhase === 'flying'}
-            className="w-full glow-primary"
-          >
-            Apostar
-          </Button>
+          <Button onClick={() => placeBet(slotIdx)} disabled={gamePhase === 'flying'} className="w-full glow-primary">Apostar</Button>
         ) : (
-          <Button
-            onClick={() => doCashout(slotIdx)}
-            disabled={gamePhase !== 'flying' || !!bet.cashoutMultiplier}
-            className="w-full bg-success hover:bg-success/90 text-success-foreground font-bold text-lg"
-          >
-            {bet.cashoutMultiplier
-              ? `Retirou ${bet.cashoutMultiplier.toFixed(2)}x`
-              : `RETIRAR ${currentMultiplier.toFixed(2)}x`}
+          <Button onClick={() => doCashout(slotIdx)} disabled={gamePhase !== 'flying' || !!bet.cashoutMultiplier} className="w-full bg-success hover:bg-success/90 text-success-foreground font-bold text-lg">
+            {bet.cashoutMultiplier ? `Retirou ${bet.cashoutMultiplier.toFixed(2)}x` : `RETIRAR ${currentMultiplier.toFixed(2)}x`}
           </Button>
         )}
       </CardContent>
@@ -469,49 +430,32 @@ const Aviator: React.FC = () => {
             {history.length > 0 && (
               <div className="flex gap-1.5 overflow-x-auto pb-1">
                 {history.map((h, i) => (
-                  <span
-                    key={i}
-                    className={`text-xs font-bold px-2 py-1 rounded shrink-0 ${
-                      h >= 2 ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'
-                    }`}
-                  >
+                  <span key={i} className={`text-xs font-bold px-2 py-1 rounded shrink-0 ${h >= 2 ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>
                     {h.toFixed(2)}x
                   </span>
                 ))}
               </div>
             )}
-
             <div className="relative bg-card border border-border rounded-lg overflow-hidden">
               <canvas ref={canvasRef} className="w-full h-[280px] sm:h-[340px]" style={{ imageRendering: 'auto' }} />
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 {gamePhase === 'countdown' && (
-                  <div className="text-6xl font-black text-primary animate-pulse drop-shadow-lg">
-                    {countdown}
-                  </div>
+                  <div className="text-6xl font-black text-primary animate-pulse drop-shadow-lg">{countdown}</div>
                 )}
                 {gamePhase === 'flying' && (
-                  <div className="text-6xl sm:text-7xl font-black text-gradient drop-shadow-lg">
-                    {currentMultiplier.toFixed(2)}x
-                  </div>
+                  <div className="text-6xl sm:text-7xl font-black text-gradient drop-shadow-lg">{currentMultiplier.toFixed(2)}x</div>
                 )}
                 {gamePhase === 'crashed' && (
                   <div className="text-center">
-                    <div className="text-5xl sm:text-6xl font-black text-destructive drop-shadow-lg">
-                      CRASHED
-                    </div>
-                    <div className="text-3xl font-bold text-destructive/80 mt-1">
-                      {crashPoint.toFixed(2)}x
-                    </div>
+                    <div className="text-5xl sm:text-6xl font-black text-destructive drop-shadow-lg">CRASHED</div>
+                    <div className="text-3xl font-bold text-destructive/80 mt-1">{crashPoint.toFixed(2)}x</div>
                   </div>
                 )}
                 {gamePhase === 'waiting' && (
-                  <div className="text-xl text-muted-foreground font-medium animate-pulse">
-                    Aguardando apostas...
-                  </div>
+                  <div className="text-xl text-muted-foreground font-medium animate-pulse">Aguardando apostas...</div>
                 )}
               </div>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {renderBetPanel(1, bet1, setBet1)}
               {renderBetPanel(2, bet2, setBet2)}

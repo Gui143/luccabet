@@ -24,11 +24,14 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   )
 
+  const json = (data: unknown, status = 200) =>
+    new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+
   try {
-    const { action } = await req.json()
+    const body = await req.json()
+    const action = body.action
 
     if (action === 'get_or_create_round') {
-      // Check for active round
       const { data: active } = await supabase
         .from('aviator_rounds')
         .select('*')
@@ -37,13 +40,8 @@ Deno.serve(async (req) => {
         .limit(1)
         .single()
 
-      if (active) {
-        return new Response(JSON.stringify({ round: active }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        })
-      }
+      if (active) return json({ round: active })
 
-      // Create new round
       const crashPoint = generateCrashPoint()
       const { data: newRound, error } = await supabase
         .from('aviator_rounds')
@@ -52,15 +50,10 @@ Deno.serve(async (req) => {
         .single()
 
       if (error) throw error
-      return new Response(JSON.stringify({ round: newRound }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
+      return json({ round: newRound })
     }
 
     if (action === 'start_countdown') {
-      const { round_id } = await req.json().catch(() => ({}))
-      
-      // Get current waiting round
       const { data: round } = await supabase
         .from('aviator_rounds')
         .select('*')
@@ -69,11 +62,7 @@ Deno.serve(async (req) => {
         .limit(1)
         .single()
 
-      if (!round) {
-        return new Response(JSON.stringify({ error: 'No waiting round' }), {
-          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        })
-      }
+      if (!round) return json({ error: 'No waiting round' }, 400)
 
       const { error } = await supabase
         .from('aviator_rounds')
@@ -81,15 +70,10 @@ Deno.serve(async (req) => {
         .eq('id', round.id)
 
       if (error) throw error
-      return new Response(JSON.stringify({ success: true, round_id: round.id }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
+      return json({ success: true, round_id: round.id })
     }
 
     if (action === 'start_flight') {
-      const { round_id } = await req.json().catch(() => ({}))
-
-      // Find countdown round
       const { data: round } = await supabase
         .from('aviator_rounds')
         .select('*')
@@ -98,26 +82,19 @@ Deno.serve(async (req) => {
         .limit(1)
         .single()
 
-      if (!round) {
-        return new Response(JSON.stringify({ error: 'No countdown round' }), {
-          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        })
-      }
+      if (!round) return json({ error: 'No countdown round' }, 400)
 
+      const now = new Date().toISOString()
       const { error } = await supabase
         .from('aviator_rounds')
-        .update({ status: 'flying', started_at: new Date().toISOString() })
+        .update({ status: 'flying', started_at: now })
         .eq('id', round.id)
 
       if (error) throw error
-      return new Response(JSON.stringify({ success: true, round_id: round.id, crash_point: round.crash_point }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
+      return json({ success: true, round_id: round.id, crash_point: round.crash_point, started_at: now })
     }
 
     if (action === 'crash') {
-      const { round_id } = await req.json().catch(() => ({}))
-
       const { data: round } = await supabase
         .from('aviator_rounds')
         .select('*')
@@ -126,11 +103,7 @@ Deno.serve(async (req) => {
         .limit(1)
         .single()
 
-      if (!round) {
-        return new Response(JSON.stringify({ error: 'No flying round' }), {
-          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        })
-      }
+      if (!round) return json({ error: 'No flying round' }, 400)
 
       const { error } = await supabase
         .from('aviator_rounds')
@@ -139,23 +112,17 @@ Deno.serve(async (req) => {
 
       if (error) throw error
 
-      // Auto-create next round after marking crash
+      // Auto-create next round
       const nextCrash = generateCrashPoint()
       await supabase
         .from('aviator_rounds')
         .insert({ crash_point: nextCrash, status: 'waiting' })
 
-      return new Response(JSON.stringify({ success: true, crash_point: round.crash_point }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
+      return json({ success: true, crash_point: round.crash_point })
     }
 
-    return new Response(JSON.stringify({ error: 'Unknown action' }), {
-      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    })
+    return json({ error: 'Unknown action' }, 400)
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    })
+    return json({ error: err.message }, 500)
   }
 })
