@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, Trophy, CircleDot, Plane, Cat, Goal } from 'lucide-react';
+import { Zap, Trophy, CircleDot, Plane, Cat, Goal, Spade } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
@@ -8,13 +8,21 @@ import Layout from '@/components/Layout';
 const Games: React.FC = () => {
   const games = [
     {
+      title: 'Blackjack',
+      description: 'Chegue o mais perto de 21 sem estourar!',
+      icon: Spade,
+      color: 'from-primary to-primary/60',
+      path: '/games/blackjack',
+      odds: 'Até 2.5x',
+      isNew: true
+    },
+    {
       title: 'Fortune Tiger',
       description: 'O tigre da fortuna! Gire os rolos e ganhe prêmios.',
       icon: Cat,
       color: 'from-primary to-primary/60',
       path: '/games/fortune-tiger',
       odds: 'Até 50x',
-      isNew: true
     },
     {
       title: 'Penalty Burrows',
@@ -23,7 +31,6 @@ const Games: React.FC = () => {
       color: 'from-primary/80 to-primary/40',
       path: '/games/penalty-burrows',
       odds: 'Até 2x',
-      isNew: true
     },
     {
       title: 'Mines',

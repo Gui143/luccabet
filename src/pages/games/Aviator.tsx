@@ -437,7 +437,7 @@ const Aviator: React.FC = () => {
               </div>
             )}
             <div className="relative bg-card border border-border rounded-lg overflow-hidden">
-              <canvas ref={canvasRef} className="w-full h-[280px] sm:h-[340px]" style={{ imageRendering: 'auto' }} />
+              <canvas ref={canvasRef} className="w-full h-[360px] sm:h-[400px]" style={{ imageRendering: 'auto' }} />
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 {gamePhase === 'countdown' && (
                   <div className="text-6xl font-black text-primary animate-pulse drop-shadow-lg">{countdown}</div>
