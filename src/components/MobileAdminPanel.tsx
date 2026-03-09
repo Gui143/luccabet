@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import PlayersTab from '@/components/admin/PlayersTab';
+import AdminDashboard from '@/components/admin/AdminDashboard';
 
 interface CBFDGame {
   id: string;
@@ -471,8 +472,11 @@ const MobileAdminPanel: React.FC = () => {
         <h2 className="text-xl font-bold text-gradient">PAINEL ADMIN CBFD</h2>
       </div>
 
-      <Tabs defaultValue="partidas" className="w-full">
-        <TabsList className="w-full grid grid-cols-6 h-auto gap-1 bg-muted/50 p-1">
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="w-full grid grid-cols-7 h-auto gap-1 bg-muted/50 p-1">
+          <TabsTrigger value="dashboard" className="text-[10px] sm:text-xs py-2 px-1">
+            Dashboard
+          </TabsTrigger>
           <TabsTrigger value="partidas" className="text-[10px] sm:text-xs py-2 px-1">
             Partidas
           </TabsTrigger>
@@ -492,6 +496,11 @@ const MobileAdminPanel: React.FC = () => {
             Códigos
           </TabsTrigger>
         </TabsList>
+
+        {/* DASHBOARD */}
+        <TabsContent value="dashboard" className="mt-4">
+          <AdminDashboard />
+        </TabsContent>
 
         {/* PARTIDAS */}
         <TabsContent value="partidas" className="mt-4 space-y-4">

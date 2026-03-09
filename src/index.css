@@ -90,6 +90,13 @@
       filter: drop-shadow(0 0 20px hsl(var(--primary))) drop-shadow(0 0 30px hsl(var(--primary)));
     }
   }
+
+  .vip-glow-diamond {
+    box-shadow: 0 0 8px hsl(200 90% 60% / 0.5), 0 0 16px hsl(200 90% 60% / 0.2);
+  }
+  .vip-glow-gold {
+    box-shadow: 0 0 8px hsl(45 90% 55% / 0.5), 0 0 16px hsl(45 90% 55% / 0.2);
+  }
 }
 
 /* Hide Lovable.dev embeds and badge */

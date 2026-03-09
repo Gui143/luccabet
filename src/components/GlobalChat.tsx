@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, MessageCircle, X } from 'lucide-react';
+import { Send, MessageCircle, X, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getVipLevel } from '@/lib/vipLevels';
 
 interface ChatMessage {
   id: string;
@@ -143,27 +144,33 @@ const GlobalChat: React.FC = () => {
           <CardContent className="p-0 flex flex-col h-[calc(100%-5rem)]">
             <ScrollArea className="flex-1 p-4" ref={scrollRef}>
               <div className="space-y-3">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${
-                      msg.user_id === user.id ? 'items-end' : 'items-start'
-                    }`}
-                  >
-                    <span className="text-xs text-muted-foreground mb-1">
-                      {msg.profiles?.username || 'Unknown'}
-                    </span>
+                {messages.map((msg) => {
+                  // Simple VIP indicator - for chat messages we use a lightweight approach
+                  const isSystem = msg.message.startsWith('🎉');
+                  return (
                     <div
-                      className={`px-3 py-2 rounded-lg max-w-[80%] ${
-                        msg.user_id === user.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                      key={msg.id}
+                      className={`flex flex-col ${
+                        msg.user_id === user.id ? 'items-end' : 'items-start'
                       }`}
                     >
-                      <p className="text-sm break-words">{msg.message}</p>
+                      <span className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                        {msg.profiles?.username || 'Unknown'}
+                      </span>
+                      <div
+                        className={`px-3 py-2 rounded-lg max-w-[80%] ${
+                          isSystem
+                            ? 'bg-success/20 border border-success/30 text-success'
+                            : msg.user_id === user.id
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <p className="text-sm break-words">{msg.message}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
 
