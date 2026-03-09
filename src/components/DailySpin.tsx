@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Gift, X } from 'lucide-react';
+import { Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,11 +57,11 @@ const DailySpin: React.FC = () => {
     const size = 280;
     canvas.width = size * 2;
     canvas.height = size * 2;
-    const cx = size, cy = size, r = size - 10;
+    const r = size - 10;
 
     ctx.clearRect(0, 0, size * 2, size * 2);
     ctx.save();
-    ctx.translate(cx, cy);
+    ctx.translate(size, size);
     ctx.rotate((rot * Math.PI) / 180);
 
     const sliceAngle = (2 * Math.PI) / PRIZES.length;
@@ -80,7 +79,6 @@ const DailySpin: React.FC = () => {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Text
       ctx.save();
       ctx.rotate(start + sliceAngle / 2);
       ctx.textAlign = 'center';
@@ -98,9 +96,9 @@ const DailySpin: React.FC = () => {
     // Arrow
     ctx.fillStyle = '#e10600';
     ctx.beginPath();
-    ctx.moveTo(cx, 4);
-    ctx.lineTo(cx - 14, 34);
-    ctx.lineTo(cx + 14, 34);
+    ctx.moveTo(size, 4);
+    ctx.lineTo(size - 14, 34);
+    ctx.lineTo(size + 14, 34);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = '#fff';
@@ -113,8 +111,7 @@ const DailySpin: React.FC = () => {
     setSpinning(true);
     setPrize(null);
 
-    // Weighted random: higher chance for lower prizes
-    const weights = [10, 30, 8, 30, 12, 30, 3, 15]; // roughly: 1, 0, 5, 0, 2, 0, 10, 0.5
+    const weights = [10, 30, 8, 30, 12, 30, 3, 15];
     const total = weights.reduce((a, b) => a + b, 0);
     let rand = Math.random() * total;
     let winIdx = 0;
@@ -125,7 +122,7 @@ const DailySpin: React.FC = () => {
 
     const sliceAngle = 360 / PRIZES.length;
     const targetAngle = 360 - (winIdx * sliceAngle + sliceAngle / 2);
-    const totalRotation = 360 * 5 + targetAngle; // 5 full spins + target
+    const totalRotation = 360 * 5 + targetAngle;
 
     const startRot = rotation;
     const duration = 4000;
@@ -134,7 +131,6 @@ const DailySpin: React.FC = () => {
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       const currentRot = startRot + totalRotation * eased;
       setRotation(currentRot % 360);
@@ -149,7 +145,6 @@ const DailySpin: React.FC = () => {
         setSpinning(false);
         setCanSpin(false);
 
-        // Save to DB
         if (wonPrize.value > 0) {
           updateBalance(wonPrize.value);
           toast.success(`🎉 Você ganhou ${formatBRLShort(wonPrize.value)}!`);

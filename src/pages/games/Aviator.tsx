@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Plane } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatBRLShort } from '@/lib/formatCurrency';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import AviatorCanvas, { AviatorCanvasHandle } from '@/components/aviator/AviatorCanvas';
+import AviatorBetPanel from '@/components/aviator/AviatorBetPanel';
+import AviatorHistory from '@/components/aviator/AviatorHistory';
 
 type GamePhase = 'waiting' | 'countdown' | 'flying' | 'crashed';
 
@@ -16,19 +17,21 @@ interface BetSlot {
   placed: boolean;
   cashoutMultiplier: number | null;
   autoCashout: string;
+  autoCashoutEnabled: boolean;
 }
 
-const INITIAL_BET: BetSlot = { amount: '10', placed: false, cashoutMultiplier: null, autoCashout: '' };
+const INITIAL_BET: BetSlot = { amount: '10', placed: false, cashoutMultiplier: null, autoCashout: '', autoCashoutEnabled: false };
 
 const Aviator: React.FC = () => {
   const { user, updateBalance, addBet } = useAuth();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasHandle = useRef<AviatorCanvasHandle>(null);
   const animationRef = useRef<number>();
   const multiplierRef = useRef(1.00);
   const crashPointRef = useRef(2.00);
   const phaseRef = useRef<GamePhase>('waiting');
   const hasCrashedRef = useRef(false);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval>>();
+  const tickIntervalRef = useRef<ReturnType<typeof setInterval>>();
 
   const [gamePhase, setGamePhase] = useState<GamePhase>('waiting');
   const [currentMultiplier, setCurrentMultiplier] = useState(1.00);
@@ -52,7 +55,7 @@ const Aviator: React.FC = () => {
   };
 
   const startLocalCountdown = useCallback(() => {
-    if (phaseRef.current === 'countdown') return; // already counting
+    if (phaseRef.current === 'countdown') return;
     phaseRef.current = 'countdown';
     setGamePhase('countdown');
     setCountdown(5);
@@ -66,20 +69,12 @@ const Aviator: React.FC = () => {
       setCountdown(c);
       if (c <= 0) {
         clearInterval(countdownTimerRef.current!);
-        // Trigger flight on server
-        callController('start_flight').then(data => {
-          if (data?.started_at && data?.crash_point) {
-            startLocalAnimation(Number(data.crash_point), data.started_at);
-          }
-        }).catch(err => {
-          console.log('start_flight already handled by another client', err);
-        });
       }
     }, 1000);
   }, []);
 
   const startLocalAnimation = useCallback((crashPt: number, serverStartedAt: string) => {
-    if (phaseRef.current === 'flying') return; // already flying
+    if (phaseRef.current === 'flying') return;
     const serverStart = new Date(serverStartedAt).getTime();
     crashPointRef.current = crashPt;
     multiplierRef.current = 1.00;
@@ -97,7 +92,7 @@ const Aviator: React.FC = () => {
       const mult = Math.pow(Math.E, 0.08 * t);
       multiplierRef.current = mult;
       setCurrentMultiplier(mult);
-      drawCanvas(mult, crashPt, false);
+      canvasHandle.current?.draw(mult, crashPt, false);
 
       if (mult >= crashPt) {
         handleLocalCrash(crashPt);
@@ -108,6 +103,29 @@ const Aviator: React.FC = () => {
     animationRef.current = requestAnimationFrame(animate);
   }, []);
 
+  const recordWin = async (amount: number, betAmount: number, multiplier: number) => {
+    if (!user) return;
+    try {
+      await supabase.from('game_wins').insert({
+        user_id: user.id,
+        game_name: 'Aviator',
+        bet_amount: betAmount,
+        multiplier,
+        win_amount: amount,
+      });
+
+      // Auto chat message for big wins (10x+)
+      if (multiplier >= 10) {
+        await supabase.from('chat_messages').insert({
+          user_id: user.id,
+          message: `🎉 acabou de ganhar ${formatBRLShort(amount)} no ${multiplier.toFixed(1)}x! ✈️`,
+        });
+      }
+    } catch (e) {
+      console.error('Failed to record win', e);
+    }
+  };
+
   const handleLocalCrash = useCallback((crash: number) => {
     if (hasCrashedRef.current) return;
     hasCrashedRef.current = true;
@@ -115,9 +133,8 @@ const Aviator: React.FC = () => {
     setGamePhase('crashed');
     setCrashPoint(crash);
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    drawCanvas(crash, crash, true);
+    canvasHandle.current?.draw(crash, crash, true);
 
-    // Resolve bets using refs for latest values
     [
       { bet: bet1Ref.current, setBet: setBet1 },
       { bet: bet2Ref.current, setBet: setBet2 },
@@ -134,17 +151,13 @@ const Aviator: React.FC = () => {
     toast.error(`💥 Crashed at ${crash.toFixed(2)}x!`);
     setHistory(h => [crash, ...h].slice(0, 20));
 
-    // Tell server to crash + create next round
-    callController('crash').catch(console.error);
-
-    // Auto-transition to waiting after 3s
     setTimeout(() => {
       phaseRef.current = 'waiting';
       setGamePhase('waiting');
     }, 3000);
   }, [addBet]);
 
-  // Subscribe to realtime
+  // Server tick + realtime sync
   useEffect(() => {
     // Initial load
     callController('get_or_create_round').then(data => {
@@ -156,6 +169,11 @@ const Aviator: React.FC = () => {
         startLocalCountdown();
       }
     }).catch(console.error);
+
+    // Server tick every 2 seconds to drive the game loop
+    tickIntervalRef.current = setInterval(() => {
+      callController('tick').catch(console.error);
+    }, 2000);
 
     // Load history
     supabase
@@ -177,7 +195,7 @@ const Aviator: React.FC = () => {
           const round = payload.new as any;
           if (!round?.status) return;
 
-          if (round.status === 'waiting' && phaseRef.current !== 'waiting') {
+          if (round.status === 'waiting' && phaseRef.current !== 'waiting' && phaseRef.current !== 'crashed') {
             phaseRef.current = 'waiting';
             setGamePhase('waiting');
             setBet1(b => ({ ...b, cashoutMultiplier: null }));
@@ -203,20 +221,22 @@ const Aviator: React.FC = () => {
       supabase.removeChannel(channel);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+      if (tickIntervalRef.current) clearInterval(tickIntervalRef.current);
     };
   }, []);
 
   // Auto cashout
   useEffect(() => {
     if (gamePhase !== 'flying') return;
-    if (bet1.placed && !bet1.cashoutMultiplier && bet1.autoCashout) {
-      const target = parseFloat(bet1.autoCashout);
-      if (!isNaN(target) && currentMultiplier >= target) doCashout(1);
-    }
-    if (bet2.placed && !bet2.cashoutMultiplier && bet2.autoCashout) {
-      const target = parseFloat(bet2.autoCashout);
-      if (!isNaN(target) && currentMultiplier >= target) doCashout(2);
-    }
+    [
+      { bet: bet1, setBet: setBet1, idx: 1 },
+      { bet: bet2, setBet: setBet2, idx: 2 },
+    ].forEach(({ bet, idx }) => {
+      if (bet.placed && !bet.cashoutMultiplier && bet.autoCashoutEnabled && bet.autoCashout) {
+        const target = parseFloat(bet.autoCashout);
+        if (!isNaN(target) && currentMultiplier >= target) doCashout(idx);
+      }
+    });
   }, [currentMultiplier, gamePhase]);
 
   const placeBet = (slotIdx: number) => {
@@ -229,15 +249,6 @@ const Aviator: React.FC = () => {
     updateBalance(-amount);
     setBet(b => ({ ...b, placed: true }));
     toast.success(`Aposta ${slotIdx}: ${formatBRLShort(amount)}`);
-
-    if (gamePhase === 'waiting') {
-      callController('start_countdown').then(() => {
-        startLocalCountdown();
-      }).catch(err => {
-        console.log('Countdown already started', err);
-        startLocalCountdown();
-      });
-    }
   };
 
   const doCashout = (slotIdx: number) => {
@@ -253,166 +264,9 @@ const Aviator: React.FC = () => {
 
     addBet({ game: 'Aviator', amount: amt, odds: mult, result: 'win', profit: win - amt });
     toast.success(`✈️ Aposta ${slotIdx}: ${mult.toFixed(2)}x → ${formatBRLShort(win)}`);
+
+    recordWin(win, amt, mult);
   };
-
-  // Canvas drawing (unchanged)
-  const drawCanvas = (multiplier: number, crash: number, crashed: boolean) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const W = canvas.width, H = canvas.height;
-
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.strokeStyle = 'rgba(225,6,0,0.12)';
-    ctx.lineWidth = 1;
-    for (let i = 1; i < 10; i++) {
-      const y = (H / 10) * i;
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-      const x = (W / 10) * i;
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-    }
-
-    const maxMult = Math.max(crash, multiplier, 2);
-    const progress = Math.min((multiplier - 1) / (maxMult - 1), 1);
-    const points: [number, number][] = [];
-
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = crashed ? 'rgba(225,6,0,0.9)' : 'rgba(225,6,0,0.5)';
-    ctx.strokeStyle = crashed ? '#e10600' : '#ff2020';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-
-    const steps = 200;
-    for (let i = 0; i <= steps; i++) {
-      const t = (i / steps) * progress;
-      const x = t * W * 0.9 + W * 0.05;
-      const y = H - H * 0.1 - (H * 0.75 * Math.pow(t, 1.3));
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      points.push([x, y]);
-    }
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    if (points.length > 1) {
-      ctx.beginPath();
-      ctx.moveTo(points[0][0], H);
-      points.forEach(([x, y]) => ctx.lineTo(x, y));
-      ctx.lineTo(points[points.length - 1][0], H);
-      ctx.closePath();
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, 'rgba(225,6,0,0.15)');
-      grad.addColorStop(1, 'rgba(225,6,0,0.02)');
-      ctx.fillStyle = grad;
-      ctx.fill();
-    }
-
-    if (!crashed && points.length > 1) {
-      const [px, py] = points[points.length - 1];
-      const [px2, py2] = points.length > 3 ? points[points.length - 4] : points[0];
-      const angle = Math.atan2(py2 - py, px - px2);
-      ctx.save();
-      ctx.translate(px, py);
-      ctx.rotate(-angle);
-      for (let i = 0; i < 8; i++) {
-        const alpha = 0.6 - i * 0.07;
-        const size = 4 - i * 0.4;
-        ctx.fillStyle = `rgba(255,${60 + i * 20},0,${Math.max(0, alpha)})`;
-        ctx.beginPath();
-        ctx.arc(-22 - i * 7 + Math.random() * 3, (Math.random() - 0.5) * 6, Math.max(0.5, size), 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.shadowBlur = 25;
-      ctx.shadowColor = 'rgba(255,0,0,0.8)';
-      ctx.fillStyle = '#e10600';
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 22, 7, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#cc0500';
-      ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-22, 14); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-22, -14); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#b00400';
-      ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(-26, 8); ctx.lineTo(-22, 0); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(-26, -8); ctx.lineTo(-22, 0); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = 'rgba(255,255,255,0.6)';
-      ctx.beginPath();
-      ctx.ellipse(16, 0, 5, 4, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.restore();
-    }
-
-    if (crashed && points.length > 1) {
-      const [px, py] = points[points.length - 1];
-      for (let i = 0; i < 12; i++) {
-        const r = Math.random() * 30 + 5;
-        const a = Math.random() * Math.PI * 2;
-        ctx.fillStyle = `rgba(255,${Math.floor(Math.random() * 100)},0,${0.7 - i * 0.05})`;
-        ctx.beginPath();
-        ctx.arc(px + Math.cos(a) * r, py + Math.sin(a) * r, 3 + Math.random() * 4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  };
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const updateSize = () => {
-      canvas.width = canvas.offsetWidth * (window.devicePixelRatio || 1);
-      canvas.height = canvas.offsetHeight * (window.devicePixelRatio || 1);
-      const ctx = canvas.getContext('2d');
-      if (ctx) ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
-      drawCanvas(multiplierRef.current, crashPointRef.current, phaseRef.current === 'crashed');
-    };
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => {
-      window.removeEventListener('resize', updateSize);
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    };
-  }, []);
-
-  const renderBetPanel = (slotIdx: number, bet: BetSlot, setBet: React.Dispatch<React.SetStateAction<BetSlot>>) => (
-    <Card className="border-border bg-card">
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-muted-foreground">Aposta {slotIdx}</span>
-          {bet.cashoutMultiplier && (
-            <span className="text-xs font-bold text-success bg-success/10 px-2 py-1 rounded">
-              ✓ {bet.cashoutMultiplier.toFixed(2)}x
-            </span>
-          )}
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-xs text-muted-foreground">Valor (R$)</label>
-            <Input type="number" value={bet.amount} onChange={(e) => setBet(b => ({ ...b, amount: e.target.value }))} disabled={bet.placed || gamePhase === 'flying'} className="bg-input h-9 text-sm" min="1" />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">Auto Cashout</label>
-            <Input type="number" value={bet.autoCashout} onChange={(e) => setBet(b => ({ ...b, autoCashout: e.target.value }))} placeholder="2.00" className="bg-input h-9 text-sm" min="1.01" step="0.01" />
-          </div>
-        </div>
-        <div className="flex gap-1">
-          {[5, 10, 50, 100].map(v => (
-            <Button key={v} onClick={() => setBet(b => ({ ...b, amount: v.toString() }))} variant="outline" size="sm" disabled={bet.placed || gamePhase === 'flying'} className="flex-1 h-7 text-xs">{v}</Button>
-          ))}
-        </div>
-        {!bet.placed ? (
-          <Button onClick={() => placeBet(slotIdx)} disabled={gamePhase === 'flying'} className="w-full glow-primary">Apostar</Button>
-        ) : (
-          <Button onClick={() => doCashout(slotIdx)} disabled={gamePhase !== 'flying' || !!bet.cashoutMultiplier} className="w-full bg-success hover:bg-success/90 text-success-foreground font-bold text-lg">
-            {bet.cashoutMultiplier ? `Retirou ${bet.cashoutMultiplier.toFixed(2)}x` : `RETIRAR ${currentMultiplier.toFixed(2)}x`}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
 
   return (
     <Layout>
@@ -427,38 +281,32 @@ const Aviator: React.FC = () => {
             <CardDescription>Retire antes do avião cair! Sincronizado em tempo real.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {history.length > 0 && (
-              <div className="flex gap-1.5 overflow-x-auto pb-1">
-                {history.map((h, i) => (
-                  <span key={i} className={`text-xs font-bold px-2 py-1 rounded shrink-0 ${h >= 2 ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>
-                    {h.toFixed(2)}x
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className="relative bg-card border border-border rounded-lg overflow-hidden">
-              <canvas ref={canvasRef} className="w-full h-[360px] sm:h-[400px]" style={{ imageRendering: 'auto' }} />
+            <AviatorHistory history={history} />
+
+            <div className="relative bg-card border border-border rounded-lg overflow-visible">
+              <AviatorCanvas ref={canvasHandle} />
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 {gamePhase === 'countdown' && (
-                  <div className="text-6xl font-black text-primary animate-pulse drop-shadow-lg">{countdown}</div>
+                  <div className="text-5xl sm:text-6xl font-black text-primary animate-pulse drop-shadow-lg">{countdown}</div>
                 )}
                 {gamePhase === 'flying' && (
-                  <div className="text-6xl sm:text-7xl font-black text-gradient drop-shadow-lg">{currentMultiplier.toFixed(2)}x</div>
+                  <div className="text-5xl sm:text-7xl font-black text-gradient drop-shadow-lg">{currentMultiplier.toFixed(2)}x</div>
                 )}
                 {gamePhase === 'crashed' && (
                   <div className="text-center">
-                    <div className="text-5xl sm:text-6xl font-black text-destructive drop-shadow-lg">CRASHED</div>
-                    <div className="text-3xl font-bold text-destructive/80 mt-1">{crashPoint.toFixed(2)}x</div>
+                    <div className="text-4xl sm:text-6xl font-black text-destructive drop-shadow-lg">CRASHED</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-destructive/80 mt-1">{crashPoint.toFixed(2)}x</div>
                   </div>
                 )}
                 {gamePhase === 'waiting' && (
-                  <div className="text-xl text-muted-foreground font-medium animate-pulse">Aguardando apostas...</div>
+                  <div className="text-lg sm:text-xl text-muted-foreground font-medium animate-pulse">Aguardando próxima rodada...</div>
                 )}
               </div>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {renderBetPanel(1, bet1, setBet1)}
-              {renderBetPanel(2, bet2, setBet2)}
+              <AviatorBetPanel slotIdx={1} bet={bet1} setBet={setBet1} gamePhase={gamePhase} currentMultiplier={currentMultiplier} onPlaceBet={placeBet} onCashout={doCashout} />
+              <AviatorBetPanel slotIdx={2} bet={bet2} setBet={setBet2} gamePhase={gamePhase} currentMultiplier={currentMultiplier} onPlaceBet={placeBet} onCashout={doCashout} />
             </div>
           </CardContent>
         </Card>
