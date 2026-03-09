@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/Layout';
+import VipBadge from '@/components/VipBadge';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatBRL } from '@/lib/formatCurrency';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,6 +66,9 @@ const Account: React.FC = () => {
             <div>
               <div className="text-sm text-muted-foreground mb-1">ID da Conta</div>
               <div className="text-sm font-mono bg-muted p-2 rounded">{user.id}</div>
+            </div>
+            <div className="pt-2 border-t border-border">
+              <VipBadge />
             </div>
           </CardContent>
         </Card>
