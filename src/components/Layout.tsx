@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Gamepad2, ListOrdered, User, LogOut, Wallet, Settings } from 'lucide-react';
+import { Home, Gamepad2, ListOrdered, User, LogOut, Wallet, Settings, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { formatBRLShort } from '@/lib/formatCurrency';
@@ -18,6 +18,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { path: '/games', label: 'Jogos', icon: Gamepad2 },
     { path: '/wallet', label: 'Carteira', icon: Wallet },
     { path: '/my-bets', label: 'Apostas', icon: ListOrdered },
+    { path: '/affiliates', label: 'Afiliados', icon: Users },
     { path: '/account', label: 'Conta', icon: User },
   ];
 
