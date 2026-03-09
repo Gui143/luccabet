@@ -375,6 +375,76 @@ export type Database = {
           },
         ]
       }
+      daily_spin_claims: {
+        Row: {
+          claimed_at: string
+          id: string
+          prize_amount: number
+          spin_date: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          id?: string
+          prize_amount?: number
+          spin_date?: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          id?: string
+          prize_amount?: number
+          spin_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_spin_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_wins: {
+        Row: {
+          bet_amount: number
+          created_at: string
+          game_name: string
+          id: string
+          multiplier: number
+          user_id: string
+          win_amount: number
+        }
+        Insert: {
+          bet_amount: number
+          created_at?: string
+          game_name: string
+          id?: string
+          multiplier: number
+          user_id: string
+          win_amount: number
+        }
+        Update: {
+          bet_amount?: number
+          created_at?: string
+          game_name?: string
+          id?: string
+          multiplier?: number
+          user_id?: string
+          win_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_wins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           balance: number
