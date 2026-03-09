@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { formatBRLShort } from '@/lib/formatCurrency';
 import MobileAdminPanel from '@/components/MobileAdminPanel';
+import SoundToggle from '@/components/SoundToggle';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -94,6 +95,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </nav>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              <SoundToggle />
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary border border-border">
                 <Wallet className="w-4 h-4 text-primary shrink-0" />
                 <span className="font-bold text-primary text-sm">{formatBRLShort(user.balance)}</span>
