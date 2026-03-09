@@ -107,11 +107,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (email: string, password: string, username: string): Promise<boolean> => {
     try {
+      const referralCode = localStorage.getItem('referral_code') || undefined;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { username },
+          data: { username, referral_code: referralCode },
           emailRedirectTo: `${window.location.origin}/`
         }
       });
@@ -123,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data.user) {
         toast.success('Account created successfully!');
+        localStorage.removeItem('referral_code');
         // Check if CEO email
         if (email === 'prudencioguilherme7@gmail.com') {
           await supabase
