@@ -14,6 +14,12 @@ function generateCrashPoint(): number {
   return Math.min(100, Math.max(1.01, parseFloat(raw.toFixed(2))))
 }
 
+// Calculate how long (ms) until a crash point is reached
+function timeToMultiplier(mult: number): number {
+  // mult = e^(0.08*t) => t = ln(mult)/0.08
+  return (Math.log(mult) / 0.08) * 1000
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -119,6 +125,52 @@ Deno.serve(async (req) => {
         .insert({ crash_point: nextCrash, status: 'waiting' })
 
       return json({ success: true, crash_point: round.crash_point })
+    }
+
+    // Server-driven tick: runs full game loop
+    if (action === 'tick') {
+      const { data: active } = await supabase
+        .from('aviator_rounds')
+        .select('*')
+        .in('status', ['waiting', 'countdown', 'flying'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (!active) {
+        // Create a new round
+        const cp = generateCrashPoint()
+        await supabase.from('aviator_rounds').insert({ crash_point: cp, status: 'waiting' })
+        return json({ action: 'created_round' })
+      }
+
+      if (active.status === 'waiting') {
+        // Transition to countdown
+        await supabase.from('aviator_rounds').update({ status: 'countdown' }).eq('id', active.id)
+        return json({ action: 'started_countdown', round_id: active.id })
+      }
+
+      if (active.status === 'countdown') {
+        // Transition to flying
+        const now = new Date().toISOString()
+        await supabase.from('aviator_rounds').update({ status: 'flying', started_at: now }).eq('id', active.id)
+        return json({ action: 'started_flight', round_id: active.id, crash_point: active.crash_point, started_at: now })
+      }
+
+      if (active.status === 'flying' && active.started_at) {
+        const elapsed = Date.now() - new Date(active.started_at).getTime()
+        const crashTime = timeToMultiplier(Number(active.crash_point))
+        if (elapsed >= crashTime) {
+          // Crash!
+          await supabase.from('aviator_rounds').update({ status: 'crashed' }).eq('id', active.id)
+          const nextCp = generateCrashPoint()
+          await supabase.from('aviator_rounds').insert({ crash_point: nextCp, status: 'waiting' })
+          return json({ action: 'crashed', crash_point: active.crash_point })
+        }
+        return json({ action: 'still_flying', elapsed })
+      }
+
+      return json({ action: 'no_op' })
     }
 
     return json({ error: 'Unknown action' }, 400)
