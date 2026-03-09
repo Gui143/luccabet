@@ -18,6 +18,8 @@ import Blackjack from "./pages/games/Blackjack";
 import Wallet from "./pages/Wallet";
 import MyBets from "./pages/MyBets";
 import Account from "./pages/Account";
+import Affiliates from "./pages/Affiliates";
+import Invite from "./pages/Invite";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +51,8 @@ const App = () => (
               <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
               <Route path="/my-bets" element={<ProtectedRoute><MyBets /></ProtectedRoute>} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+              <Route path="/affiliates" element={<ProtectedRoute><Affiliates /></ProtectedRoute>} />
+              <Route path="/invite/:code" element={<Invite />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
