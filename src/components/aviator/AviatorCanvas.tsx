@@ -20,15 +20,15 @@ const AviatorCanvas = forwardRef<AviatorCanvasHandle>((_, ref) => {
     if (canvas.width !== W * dpr || canvas.height !== H * dpr) {
       canvas.width = W * dpr;
       canvas.height = H * dpr;
-      ctx.scale(dpr, dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = '#0a0a0a';
     ctx.fillRect(0, 0, W, H);
 
-    // Grid
-    ctx.strokeStyle = 'rgba(225,6,0,0.12)';
+    // Grid with green tint
+    ctx.strokeStyle = 'rgba(0,155,58,0.08)';
     ctx.lineWidth = 1;
     for (let i = 1; i < 10; i++) {
       const y = (H / 10) * i;
@@ -37,13 +37,14 @@ const AviatorCanvas = forwardRef<AviatorCanvasHandle>((_, ref) => {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     }
 
+    // Exponential curve progress
     const maxMult = Math.max(crash, multiplier, 2);
     const progress = Math.min((multiplier - 1) / (maxMult - 1), 1);
     const points: [number, number][] = [];
 
     ctx.shadowBlur = 15;
-    ctx.shadowColor = crashed ? 'rgba(225,6,0,0.9)' : 'rgba(225,6,0,0.5)';
-    ctx.strokeStyle = crashed ? '#e10600' : '#ff2020';
+    ctx.shadowColor = crashed ? 'rgba(239,68,68,0.9)' : 'rgba(0,155,58,0.5)';
+    ctx.strokeStyle = crashed ? '#ef4444' : '#009B3A';
     ctx.lineWidth = 3;
     ctx.beginPath();
 
@@ -66,31 +67,30 @@ const AviatorCanvas = forwardRef<AviatorCanvasHandle>((_, ref) => {
       ctx.lineTo(points[points.length - 1][0], H);
       ctx.closePath();
       const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, 'rgba(225,6,0,0.15)');
-      grad.addColorStop(1, 'rgba(225,6,0,0.02)');
+      grad.addColorStop(0, crashed ? 'rgba(239,68,68,0.12)' : 'rgba(0,155,58,0.12)');
+      grad.addColorStop(1, 'rgba(0,155,58,0.01)');
       ctx.fillStyle = grad;
       ctx.fill();
     }
 
-    // Plane (flying)
+    // Plane
     if (!crashed && points.length > 1) {
       const [px, py] = points[points.length - 1];
       const [px2, py2] = points.length > 3 ? points[points.length - 4] : points[0];
       const angle = Math.atan2(py2 - py, px - px2);
 
-      // Scale plane based on screen size for mobile visibility
-      const planeScale = Math.max(1, Math.min(W / 400, 1.5));
+      const planeScale = Math.max(1.2, Math.min(W / 350, 1.8));
 
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(-angle);
       ctx.scale(planeScale, planeScale);
 
-      // Exhaust particles
+      // Exhaust
       for (let i = 0; i < 8; i++) {
         const alpha = 0.6 - i * 0.07;
         const size = 4 - i * 0.4;
-        ctx.fillStyle = `rgba(255,${60 + i * 20},0,${Math.max(0, alpha)})`;
+        ctx.fillStyle = `rgba(254,223,0,${Math.max(0, alpha)})`;
         ctx.beginPath();
         ctx.arc(-22 - i * 7 + Math.random() * 3, (Math.random() - 0.5) * 6, Math.max(0.5, size), 0, Math.PI * 2);
         ctx.fill();
@@ -98,19 +98,19 @@ const AviatorCanvas = forwardRef<AviatorCanvasHandle>((_, ref) => {
 
       // Body
       ctx.shadowBlur = 25;
-      ctx.shadowColor = 'rgba(255,0,0,0.8)';
-      ctx.fillStyle = '#e10600';
+      ctx.shadowColor = 'rgba(0,155,58,0.8)';
+      ctx.fillStyle = '#009B3A';
       ctx.beginPath();
       ctx.ellipse(0, 0, 22, 7, 0, 0, Math.PI * 2);
       ctx.fill();
 
       // Wings
-      ctx.fillStyle = '#cc0500';
+      ctx.fillStyle = '#007B2E';
       ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-22, 14); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
       ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-22, -14); ctx.lineTo(-14, 0); ctx.closePath(); ctx.fill();
 
       // Tail
-      ctx.fillStyle = '#b00400';
+      ctx.fillStyle = '#FEDF00';
       ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(-26, 8); ctx.lineTo(-22, 0); ctx.closePath(); ctx.fill();
       ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(-26, -8); ctx.lineTo(-22, 0); ctx.closePath(); ctx.fill();
 
@@ -125,13 +125,13 @@ const AviatorCanvas = forwardRef<AviatorCanvasHandle>((_, ref) => {
       ctx.restore();
     }
 
-    // Explosion on crash
+    // Explosion
     if (crashed && points.length > 1) {
       const [px, py] = points[points.length - 1];
       for (let i = 0; i < 12; i++) {
         const r = Math.random() * 30 + 5;
         const a = Math.random() * Math.PI * 2;
-        ctx.fillStyle = `rgba(255,${Math.floor(Math.random() * 100)},0,${0.7 - i * 0.05})`;
+        ctx.fillStyle = `rgba(239,${Math.floor(68 + Math.random() * 100)},68,${0.7 - i * 0.05})`;
         ctx.beginPath();
         ctx.arc(px + Math.cos(a) * r, py + Math.sin(a) * r, 3 + Math.random() * 4, 0, Math.PI * 2);
         ctx.fill();

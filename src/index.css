@@ -15,7 +15,7 @@
     --popover: 0 0% 6%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 350 90% 55%;
+    --primary: 152 100% 30%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 14%;
@@ -24,23 +24,25 @@
     --muted: 0 0% 10%;
     --muted-foreground: 0 0% 55%;
 
-    --accent: 350 90% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 49 100% 50%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 45%;
-    --success-foreground: 0 0% 0%;
+    --success: 152 100% 30%;
+    --success-foreground: 0 0% 100%;
 
     --border: 0 0% 14%;
     --input: 0 0% 10%;
-    --ring: 350 90% 55%;
+    --ring: 152 100% 30%;
 
     --radius: 0.625rem;
 
-    --glow-primary: 350 90% 55%;
-    --glow-accent: 350 90% 55%;
+    --glow-primary: 152 100% 30%;
+    --glow-accent: 49 100% 50%;
+
+    --brazil-blue: 220 100% 23%;
   }
 
   * {
@@ -63,7 +65,7 @@
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(350 90% 55%), hsl(350 90% 70%));
+    background: linear-gradient(135deg, hsl(152 100% 30%), hsl(49 100% 50%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -95,7 +97,7 @@
     box-shadow: 0 0 8px hsl(200 90% 60% / 0.5), 0 0 16px hsl(200 90% 60% / 0.2);
   }
   .vip-glow-gold {
-    box-shadow: 0 0 8px hsl(45 90% 55% / 0.5), 0 0 16px hsl(45 90% 55% / 0.2);
+    box-shadow: 0 0 8px hsl(49 100% 50% / 0.5), 0 0 16px hsl(49 100% 50% / 0.2);
   }
 }
 

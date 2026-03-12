@@ -469,7 +469,7 @@ const MobileAdminPanel: React.FC = () => {
     <div className="space-y-4 pb-20">
       <div className="flex items-center gap-2 mb-4">
         <Settings className="h-6 w-6 text-primary" />
-        <h2 className="text-xl font-bold text-gradient">PAINEL ADMIN CBFD</h2>
+        <h2 className="text-xl font-bold text-gradient">PAINEL ADMIN</h2>
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
