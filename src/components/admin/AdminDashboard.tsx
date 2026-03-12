@@ -48,19 +48,19 @@ const AdminDashboard: React.FC = () => {
       }
     }
 
-    // CBFD bets
-    if (cbfdBetsRes.data) {
-      let cbfdGains = 0;
-      let cbfdLosses = 0;
-      for (const b of cbfdBetsRes.data) {
-        cbfdGains += Number(b.amount);
-        if (b.status === 'won') cbfdLosses += Number(b.potential_win);
+    // Sport bets
+    if (sportBetsRes.data) {
+      let sportGains = 0;
+      let sportLosses = 0;
+      for (const b of sportBetsRes.data) {
+        sportGains += Number(b.amount);
+        if (b.status === 'won') sportLosses += Number(b.potential_win);
       }
-      casinoGains += cbfdGains;
-      casinoLosses += cbfdLosses;
-      if (!gameMap['Futebol CBFD']) gameMap['Futebol CBFD'] = { bets: 0, volume: 0 };
-      gameMap['Futebol CBFD'].bets += cbfdBetsRes.data.length;
-      gameMap['Futebol CBFD'].volume += cbfdGains;
+      casinoGains += sportGains;
+      casinoLosses += sportLosses;
+      if (!gameMap['Futebol']) gameMap['Futebol'] = { bets: 0, volume: 0 };
+      gameMap['Futebol'].bets += sportBetsRes.data.length;
+      gameMap['Futebol'].volume += sportGains;
     }
 
     setHouseProfit(casinoGains - casinoLosses);
