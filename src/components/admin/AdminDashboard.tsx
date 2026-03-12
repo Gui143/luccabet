@@ -22,7 +22,7 @@ const AdminDashboard: React.FC = () => {
     // Active users in last 24h
     const yesterday = new Date(Date.now() - 86400000).toISOString();
     
-    const [usersRes, activeRes, winsRes, cbfdBetsRes] = await Promise.all([
+    const [usersRes, activeRes, winsRes, sportBetsRes] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('last_seen', yesterday),
       supabase.from('game_wins').select('game_name, bet_amount, win_amount'),
