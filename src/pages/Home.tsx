@@ -16,7 +16,7 @@ const Home: React.FC = () => {
     { title: 'Slots', description: 'Gire e ganhe jackpots', icon: Trophy, color: 'from-primary/80 to-primary/40', path: '/games/slots' },
     { title: 'Roulette', description: 'Experiência clássica de cassino', icon: TrendingUp, color: 'from-primary/60 to-primary/30', path: '/games/roulette' },
     { title: 'Aviator', description: 'Decole e retire antes do crash', icon: Plane, color: 'from-primary to-destructive/60', path: '/games/aviator' },
-    { title: 'Fortune Tiger', description: 'O tigre da sorte', icon: Cat, color: 'from-amber-600/80 to-primary/40', path: '/games/fortune-tiger' },
+    { title: 'Fortune Tiger', description: 'O tigre da sorte', icon: Cat, color: 'from-accent/80 to-primary/40', path: '/games/fortune-tiger' },
   ];
 
   return (
@@ -29,10 +29,10 @@ const Home: React.FC = () => {
         <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-card via-card to-muted border border-border p-4 sm:p-8 md:p-12">
           <div className="relative z-10">
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold mb-3 sm:mb-4">
-              <span className="text-gradient">APOSTE NA CBFD</span>
+              <span className="text-gradient">APOSTE E GANHE</span>
             </h2>
             <p className="text-muted-foreground text-sm sm:text-lg mb-4 sm:mb-6 max-w-xl">
-              Aposte nos jogos da CBFD e nos melhores jogos de cassino da plataforma.
+              Aposte nos melhores jogos de cassino da plataforma BrazucaBet.
             </p>
             <div className="flex gap-3 sm:gap-4 flex-wrap">
               <Button asChild className="h-10 sm:h-11 text-sm sm:text-base">
@@ -42,7 +42,7 @@ const Home: React.FC = () => {
             </div>
           </div>
           <div className="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-32 sm:w-64 h-32 sm:h-64 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-32 sm:w-64 h-32 sm:h-64 bg-accent/5 rounded-full blur-3xl" />
         </div>
 
         {/* Games + Leaderboard Grid */}

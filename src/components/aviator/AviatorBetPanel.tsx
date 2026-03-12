@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { formatBRLShort } from '@/lib/formatCurrency';
 
 type GamePhase = 'waiting' | 'countdown' | 'flying' | 'crashed';
 
@@ -32,14 +31,14 @@ const AviatorBetPanel: React.FC<Props> = ({ slotIdx, bet, setBet, gamePhase, cur
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-muted-foreground">Aposta {slotIdx}</span>
           {bet.cashoutMultiplier && (
-            <span className="text-xs font-bold text-green-400 bg-green-400/10 px-2 py-1 rounded">
+            <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded">
               ✓ {bet.cashoutMultiplier.toFixed(2)}x
             </span>
           )}
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-xs text-muted-foreground">Valor (€)</label>
+            <label className="text-xs text-muted-foreground">Valor (R$)</label>
             <Input
               type="number"
               value={bet.amount}
@@ -96,7 +95,7 @@ const AviatorBetPanel: React.FC<Props> = ({ slotIdx, bet, setBet, gamePhase, cur
           <Button
             onClick={() => onCashout(slotIdx)}
             disabled={gamePhase !== 'flying' || !!bet.cashoutMultiplier}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-base sm:text-lg"
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base sm:text-lg"
           >
             {bet.cashoutMultiplier
               ? `Retirou ${bet.cashoutMultiplier.toFixed(2)}x`

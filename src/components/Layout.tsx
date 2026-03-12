@@ -27,7 +27,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return <>{children}</>;
   }
 
-  // Unified admin panel for all devices
   if (showAdmin && isAdminEmail) {
     return (
       <div className="min-h-screen bg-background w-full overflow-x-hidden">
@@ -36,9 +35,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <div className="flex items-center justify-between gap-2">
               <button onClick={() => setShowAdmin(false)} className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <span className="text-sm font-bold text-primary-foreground">LB</span>
+                  <span className="text-sm font-bold text-primary-foreground">BB</span>
                 </div>
-                <span className="text-lg font-bold text-gradient">LUCCABET</span>
+                <span className="text-lg font-bold text-gradient">BRAZUCABET</span>
               </button>
               <Button onClick={() => setShowAdmin(false)} variant="outline" size="sm">
                 Voltar
@@ -61,9 +60,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <div className="flex items-center justify-between gap-2">
             <Link to="/" className="flex items-center gap-2 shrink-0">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-sm sm:text-lg font-bold text-primary-foreground">LB</span>
+                <span className="text-sm sm:text-lg font-bold text-primary-foreground">BB</span>
               </div>
-              <h1 className="text-lg sm:text-2xl font-extrabold text-gradient hidden xs:block">LUCCABET</h1>
+              <h1 className="text-lg sm:text-2xl font-extrabold text-gradient hidden xs:block">BRAZUCABET</h1>
             </Link>
 
             <nav className="hidden md:flex items-center gap-6">
@@ -146,7 +145,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <footer className="border-t border-border bg-card/50 mt-16">
         <div className="container mx-auto px-4 py-6">
           <p className="text-sm text-muted-foreground text-center">
-            © 2026 LUCCABET – Todos os direitos reservados
+            © 2026 BRAZUCABET – Todos os direitos reservados
           </p>
         </div>
       </footer>

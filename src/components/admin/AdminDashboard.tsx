@@ -22,7 +22,7 @@ const AdminDashboard: React.FC = () => {
     // Active users in last 24h
     const yesterday = new Date(Date.now() - 86400000).toISOString();
     
-    const [usersRes, activeRes, winsRes, cbfdBetsRes] = await Promise.all([
+    const [usersRes, activeRes, winsRes, sportBetsRes] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('last_seen', yesterday),
       supabase.from('game_wins').select('game_name, bet_amount, win_amount'),
@@ -48,19 +48,19 @@ const AdminDashboard: React.FC = () => {
       }
     }
 
-    // CBFD bets
-    if (cbfdBetsRes.data) {
-      let cbfdGains = 0;
-      let cbfdLosses = 0;
-      for (const b of cbfdBetsRes.data) {
-        cbfdGains += Number(b.amount);
-        if (b.status === 'won') cbfdLosses += Number(b.potential_win);
+    // Sport bets
+    if (sportBetsRes.data) {
+      let sportGains = 0;
+      let sportLosses = 0;
+      for (const b of sportBetsRes.data) {
+        sportGains += Number(b.amount);
+        if (b.status === 'won') sportLosses += Number(b.potential_win);
       }
-      casinoGains += cbfdGains;
-      casinoLosses += cbfdLosses;
-      if (!gameMap['Futebol CBFD']) gameMap['Futebol CBFD'] = { bets: 0, volume: 0 };
-      gameMap['Futebol CBFD'].bets += cbfdBetsRes.data.length;
-      gameMap['Futebol CBFD'].volume += cbfdGains;
+      casinoGains += sportGains;
+      casinoLosses += sportLosses;
+      if (!gameMap['Futebol']) gameMap['Futebol'] = { bets: 0, volume: 0 };
+      gameMap['Futebol'].bets += sportBetsRes.data.length;
+      gameMap['Futebol'].volume += sportGains;
     }
 
     setHouseProfit(casinoGains - casinoLosses);

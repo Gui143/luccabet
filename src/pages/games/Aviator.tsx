@@ -22,6 +22,10 @@ interface BetSlot {
 
 const INITIAL_BET: BetSlot = { amount: '10', placed: false, cashoutMultiplier: null, autoCashout: '', autoCashoutEnabled: false };
 
+// Exponential growth: mult = e^(0.08*t)
+// This matches the server-side formula exactly
+const GROWTH_RATE = 0.08;
+
 const Aviator: React.FC = () => {
   const { user, updateBalance, addBet } = useAuth();
   const canvasHandle = useRef<AviatorCanvasHandle>(null);
@@ -32,6 +36,7 @@ const Aviator: React.FC = () => {
   const hasCrashedRef = useRef(false);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval>>();
   const tickIntervalRef = useRef<ReturnType<typeof setInterval>>();
+  const flightStartRef = useRef<number>(0);
 
   const [gamePhase, setGamePhase] = useState<GamePhase>('waiting');
   const [currentMultiplier, setCurrentMultiplier] = useState(1.00);
@@ -67,15 +72,14 @@ const Aviator: React.FC = () => {
     countdownTimerRef.current = setInterval(() => {
       c--;
       setCountdown(c);
-      if (c <= 0) {
-        clearInterval(countdownTimerRef.current!);
-      }
+      if (c <= 0) clearInterval(countdownTimerRef.current!);
     }, 1000);
   }, []);
 
   const startLocalAnimation = useCallback((crashPt: number, serverStartedAt: string) => {
     if (phaseRef.current === 'flying') return;
     const serverStart = new Date(serverStartedAt).getTime();
+    flightStartRef.current = serverStart;
     crashPointRef.current = crashPt;
     multiplierRef.current = 1.00;
     setCurrentMultiplier(1.00);
@@ -85,16 +89,37 @@ const Aviator: React.FC = () => {
     hasCrashedRef.current = false;
     if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
 
-    const animate = () => {
+    // Validation: log timing info for debugging
+    const expectedCrashTime = (Math.log(crashPt) / GROWTH_RATE) * 1000;
+    console.log(`[Aviator] Flight started. Crash point: ${crashPt}x, Expected duration: ${(expectedCrashTime/1000).toFixed(1)}s`);
+
+    let lastFrameTime = performance.now();
+    let frameCount = 0;
+
+    const animate = (now: number) => {
       if (hasCrashedRef.current) return;
+      
+      // FPS monitoring (every 60 frames)
+      frameCount++;
+      if (frameCount % 60 === 0) {
+        const fps = 60000 / (now - lastFrameTime);
+        lastFrameTime = now;
+        if (fps < 30) console.warn(`[Aviator] Low FPS: ${fps.toFixed(0)}`);
+      }
+
       const elapsed = Date.now() - serverStart;
       const t = elapsed / 1000;
-      const mult = Math.pow(Math.E, 0.08 * t);
+      const mult = Math.exp(GROWTH_RATE * t);
+      
       multiplierRef.current = mult;
-      setCurrentMultiplier(mult);
+      // Throttle React state updates to ~20fps to avoid render bottleneck
+      if (frameCount % 3 === 0) {
+        setCurrentMultiplier(mult);
+      }
       canvasHandle.current?.draw(mult, crashPt, false);
 
       if (mult >= crashPt) {
+        console.log(`[Aviator] Client-side crash at ${mult.toFixed(2)}x after ${(elapsed/1000).toFixed(1)}s`);
         handleLocalCrash(crashPt);
         return;
       }
@@ -114,7 +139,6 @@ const Aviator: React.FC = () => {
         win_amount: amount,
       });
 
-      // Auto chat message for big wins (10x+)
       if (multiplier >= 10) {
         await supabase.from('chat_messages').insert({
           user_id: user.id,
@@ -131,6 +155,7 @@ const Aviator: React.FC = () => {
     hasCrashedRef.current = true;
     phaseRef.current = 'crashed';
     setGamePhase('crashed');
+    setCurrentMultiplier(crash);
     setCrashPoint(crash);
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
     canvasHandle.current?.draw(crash, crash, true);
@@ -148,7 +173,7 @@ const Aviator: React.FC = () => {
       }
     });
 
-    toast.error(`💥 Crashed at ${crash.toFixed(2)}x!`);
+    toast.error(`💥 Crashed em ${crash.toFixed(2)}x!`);
     setHistory(h => [crash, ...h].slice(0, 20));
 
     setTimeout(() => {
@@ -159,7 +184,6 @@ const Aviator: React.FC = () => {
 
   // Server tick + realtime sync
   useEffect(() => {
-    // Initial load
     callController('get_or_create_round').then(data => {
       if (!data?.round) return;
       const round = data.round;
@@ -170,12 +194,10 @@ const Aviator: React.FC = () => {
       }
     }).catch(console.error);
 
-    // Server tick every 2 seconds to drive the game loop
     tickIntervalRef.current = setInterval(() => {
       callController('tick').catch(console.error);
     }, 2000);
 
-    // Load history
     supabase
       .from('aviator_rounds')
       .select('crash_point')
@@ -287,7 +309,7 @@ const Aviator: React.FC = () => {
               <AviatorCanvas ref={canvasHandle} />
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 {gamePhase === 'countdown' && (
-                  <div className="text-5xl sm:text-6xl font-black text-primary animate-pulse drop-shadow-lg">{countdown}</div>
+                  <div className="text-5xl sm:text-6xl font-black text-accent animate-pulse drop-shadow-lg">{countdown}</div>
                 )}
                 {gamePhase === 'flying' && (
                   <div className="text-5xl sm:text-7xl font-black text-gradient drop-shadow-lg">{currentMultiplier.toFixed(2)}x</div>

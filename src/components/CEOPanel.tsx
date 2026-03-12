@@ -495,7 +495,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gradient flex items-center gap-2">
               👑 <span className="truncate">Painel CEO</span>
             </h1>
-            <p className="text-muted-foreground text-xs sm:text-sm">LUCCABET Admin</p>
+            <p className="text-muted-foreground text-xs sm:text-sm">BrazucaBet Admin</p>
           </div>
           <Button onClick={onClose} variant="outline" size="icon" className="shrink-0 h-10 w-10">
             <X className="h-5 w-5" />

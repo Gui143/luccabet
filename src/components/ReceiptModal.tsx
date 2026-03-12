@@ -74,7 +74,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, type, amou
 
           <div className="pt-4 border-t border-border">
             <div className="text-xs text-muted-foreground text-center mb-3">
-              🔒 Assinatura Digital: LUCCABET-{txid.slice(-8).toUpperCase()}
+              🔒 Assinatura Digital: BRAZUCABET-{txid.slice(-8).toUpperCase()}
             </div>
           </div>
         </div>

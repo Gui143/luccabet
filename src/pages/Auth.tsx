@@ -43,9 +43,9 @@ const Auth: React.FC = () => {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-2xl font-bold text-primary-foreground">LB</span>
+              <span className="text-2xl font-bold text-primary-foreground">BB</span>
             </div>
-            <h1 className="text-3xl font-extrabold text-gradient">LUCCABET</h1>
+            <h1 className="text-3xl font-extrabold text-gradient">BRAZUCABET</h1>
           </div>
           <p className="text-muted-foreground">A melhor plataforma de apostas</p>
         </div>
@@ -54,7 +54,7 @@ const Auth: React.FC = () => {
           <CardHeader>
             <CardTitle>{isLogin ? 'Entrar' : 'Criar Conta'}</CardTitle>
             <CardDescription>
-              {isLogin ? 'Acesse sua conta' : 'Comece com € 1000 de saldo inicial'}
+              {isLogin ? 'Acesse sua conta' : 'Comece com R$ 1000 de saldo inicial'}
             </CardDescription>
           </CardHeader>
           <CardContent>
