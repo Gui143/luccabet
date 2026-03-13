@@ -12,6 +12,7 @@ import Leaderboard from '@/components/Leaderboard';
 const Home: React.FC = () => {
   const gameCategories = [
     { title: 'Blackjack', description: 'Chegue perto de 21', icon: Spade, color: 'from-primary to-primary/60', path: '/games/blackjack' },
+    { title: 'Baccarat', description: 'Aposte no Jogador ou Banqueiro', icon: Spade, color: 'from-accent to-primary/60', path: '/games/baccarat', isNew: true },
     { title: 'Mines', description: 'Encontre diamantes, evite bombas', icon: Zap, color: 'from-primary to-primary/60', path: '/games/mines' },
     { title: 'Slots', description: 'Gire e ganhe jackpots', icon: Trophy, color: 'from-primary/80 to-primary/40', path: '/games/slots' },
     { title: 'Roulette', description: 'Experiência clássica de cassino', icon: TrendingUp, color: 'from-primary/60 to-primary/30', path: '/games/roulette' },

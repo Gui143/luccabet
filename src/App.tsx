@@ -47,6 +47,7 @@ const App = () => (
               <Route path="/games/aviator" element={<ProtectedRoute><Aviator /></ProtectedRoute>} />
               <Route path="/games/fortune-tiger" element={<ProtectedRoute><FortuneTiger /></ProtectedRoute>} />
               <Route path="/games/blackjack" element={<ProtectedRoute><Blackjack /></ProtectedRoute>} />
+              <Route path="/games/baccarat" element={<ProtectedRoute><Baccarat /></ProtectedRoute>} />
               <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
               <Route path="/my-bets" element={<ProtectedRoute><MyBets /></ProtectedRoute>} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
