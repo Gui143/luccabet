@@ -58,7 +58,12 @@ const Home: React.FC = () => {
                 const Icon = game.icon;
                 return (
                   <Link key={game.title} to={game.path}>
-                    <Card className="bet-card h-full hover:scale-[1.02] transition-transform">
+                    <Card className="bet-card h-full hover:scale-[1.02] transition-transform relative">
+                      {(game as any).isNew && (
+                        <div className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-[10px] font-bold px-2 py-0.5 rounded-full z-10 animate-pulse shadow-lg">
+                          NOVO
+                        </div>
+                      )}
                       <CardHeader className="pb-2">
                         <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${game.color} flex items-center justify-center mb-2`}>
                           <Icon className="h-5 w-5 text-primary-foreground" />

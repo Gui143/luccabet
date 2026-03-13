@@ -8,13 +8,21 @@ import Layout from '@/components/Layout';
 const Games: React.FC = () => {
   const games = [
     {
+      title: 'Baccarat do Macedo',
+      description: 'Aposte no Jogador, Banqueiro ou Empate!',
+      icon: Spade,
+      color: 'from-accent to-primary/60',
+      path: '/games/baccarat',
+      odds: 'Até 8x',
+      isNew: true
+    },
+    {
       title: 'Blackjack',
       description: 'Chegue o mais perto de 21 sem estourar!',
       icon: Spade,
       color: 'from-primary to-primary/60',
       path: '/games/blackjack',
       odds: 'Até 2.5x',
-      isNew: true
     },
     {
       title: 'Fortune Tiger',
