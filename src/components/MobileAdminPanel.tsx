@@ -909,7 +909,7 @@ const MobileAdminPanel: React.FC = () => {
                 type="number"
                 value={creditAmount}
                 onChange={(e) => setCreditAmount(e.target.value)}
-                placeholder="Valor (€)"
+                placeholder="Valor (R$)"
                 step="0.01"
                 className="h-10"
               />
@@ -919,21 +919,7 @@ const MobileAdminPanel: React.FC = () => {
             </CardContent>
           </Card>
 
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Online ({onlineUsers.length})
-            </h4>
-            {onlineUsers.map((user, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{user.username}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                </div>
-                <p className="text-sm font-bold text-primary shrink-0">€ {parseFloat(user.balance).toFixed(2)}</p>
-              </div>
-            ))}
-          </div>
+          <UsersListWithBalance />
         </TabsContent>
       </Tabs>
 
