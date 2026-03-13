@@ -14,6 +14,7 @@ import Roulette from "./pages/games/Roulette";
 import Aviator from "./pages/games/Aviator";
 import FortuneTiger from "./pages/games/FortuneTiger";
 import Blackjack from "./pages/games/Blackjack";
+import Baccarat from "./pages/games/Baccarat";
 import Wallet from "./pages/Wallet";
 import MyBets from "./pages/MyBets";
 import Account from "./pages/Account";
