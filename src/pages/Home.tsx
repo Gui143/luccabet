@@ -12,6 +12,7 @@ import Leaderboard from '@/components/Leaderboard';
 const Home: React.FC = () => {
   const gameCategories = [
     { title: 'Blackjack', description: 'Chegue perto de 21', icon: Spade, color: 'from-primary to-primary/60', path: '/games/blackjack' },
+    { title: 'Baccarat', description: 'Aposte no Jogador ou Banqueiro', icon: Spade, color: 'from-accent to-primary/60', path: '/games/baccarat', isNew: true },
     { title: 'Mines', description: 'Encontre diamantes, evite bombas', icon: Zap, color: 'from-primary to-primary/60', path: '/games/mines' },
     { title: 'Slots', description: 'Gire e ganhe jackpots', icon: Trophy, color: 'from-primary/80 to-primary/40', path: '/games/slots' },
     { title: 'Roulette', description: 'Experiência clássica de cassino', icon: TrendingUp, color: 'from-primary/60 to-primary/30', path: '/games/roulette' },
@@ -57,7 +58,12 @@ const Home: React.FC = () => {
                 const Icon = game.icon;
                 return (
                   <Link key={game.title} to={game.path}>
-                    <Card className="bet-card h-full hover:scale-[1.02] transition-transform">
+                    <Card className="bet-card h-full hover:scale-[1.02] transition-transform relative">
+                      {(game as any).isNew && (
+                        <div className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-[10px] font-bold px-2 py-0.5 rounded-full z-10 animate-pulse shadow-lg">
+                          NOVO
+                        </div>
+                      )}
                       <CardHeader className="pb-2">
                         <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${game.color} flex items-center justify-center mb-2`}>
                           <Icon className="h-5 w-5 text-primary-foreground" />
