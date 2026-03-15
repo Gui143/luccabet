@@ -12,7 +12,7 @@ import Mines from "./pages/games/Mines";
 import Slots from "./pages/games/Slots";
 import Roulette from "./pages/games/Roulette";
 import Aviator from "./pages/games/Aviator";
-import FortuneTiger from "./pages/games/FortuneTiger";
+import GatesOfOlympus from "./pages/games/FortuneTiger";
 import Blackjack from "./pages/games/Blackjack";
 import Baccarat from "./pages/games/Baccarat";
 import Wallet from "./pages/Wallet";
