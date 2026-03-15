@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Gamepad2, Zap, Trophy, TrendingUp, Plane, Cat, Spade } from 'lucide-react';
+import { Gamepad2, Zap, Trophy, TrendingUp, Plane, Spade } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
@@ -17,7 +17,7 @@ const Home: React.FC = () => {
     { title: 'Slots', description: 'Gire e ganhe jackpots', icon: Trophy, color: 'from-primary/80 to-primary/40', path: '/games/slots' },
     { title: 'Roulette', description: 'Experiência clássica de cassino', icon: TrendingUp, color: 'from-primary/60 to-primary/30', path: '/games/roulette' },
     { title: 'Aviator', description: 'Decole e retire antes do crash', icon: Plane, color: 'from-primary to-destructive/60', path: '/games/aviator' },
-    { title: 'Fortune Tiger', description: 'O tigre da sorte', icon: Cat, color: 'from-accent/80 to-primary/40', path: '/games/fortune-tiger' },
+    { title: 'Gates of Olympus', description: 'Pragmatic Play Demo', icon: Zap, color: 'from-accent/80 to-primary/40', path: '/games/fortune-tiger', isNew: true },
   ];
 
   return (
