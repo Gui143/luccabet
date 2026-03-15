@@ -25,12 +25,13 @@ const Games: React.FC = () => {
       odds: 'Até 2.5x',
     },
     {
-      title: 'Fortune Tiger',
-      description: 'O tigre da fortuna! Gire os rolos e ganhe prêmios.',
-      icon: Cat,
+      title: 'Gates of Olympus',
+      description: 'Jogo épico da Pragmatic Play! Multiplicadores cascata.',
+      icon: Zap,
       color: 'from-accent to-accent/60',
       path: '/games/fortune-tiger',
-      odds: 'Até 50x',
+      odds: 'Até 5000x',
+      isNew: true,
     },
     {
       title: 'Mines',
