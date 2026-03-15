@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Gamepad2, Zap, Trophy, TrendingUp, Plane, Cat, Spade } from 'lucide-react';
+import { Gamepad2, Zap, Trophy, TrendingUp, Plane, Spade } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
