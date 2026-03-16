@@ -79,6 +79,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearInterval(interval);
   }, [user]);
 
+  // Realtime subscription for balance changes (e.g. from admin panel)
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`profile-balance-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newBalance = typeof payload.new.balance === 'string'
+            ? parseFloat(payload.new.balance)
+            : payload.new.balance;
+          setUser(prev => prev ? { ...prev, balance: newBalance } : null);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   const loadUserProfile = async (userId: string) => {
     const { data: profile } = await supabase
       .from('profiles')
