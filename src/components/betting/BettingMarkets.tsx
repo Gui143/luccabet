@@ -170,10 +170,10 @@ const BettingMarkets: React.FC = () => {
   const OddButton: React.FC<{ label: string; odd: number; onClick: () => void }> = ({ label, odd, onClick }) => (
     <button
       onClick={onClick}
-      className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer group"
+      className="flex items-center justify-between p-2.5 rounded-md border border-border bg-secondary/60 hover:bg-primary/15 hover:border-primary/40 transition-all cursor-pointer group"
     >
-      <span className="text-sm text-foreground">{label}</span>
-      <span className="text-sm font-bold text-primary group-hover:text-primary">{odd.toFixed(2)}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs font-bold text-primary">{odd.toFixed(2)}</span>
     </button>
   );
 
