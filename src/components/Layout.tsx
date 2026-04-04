@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Gamepad2, ListOrdered, User, LogOut, Wallet, Settings, Users, Search, Plus, ChevronDown } from 'lucide-react';
+import { Home, Gamepad2, ListOrdered, User, LogOut, Wallet, Settings, Users, Plus, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { formatBRLShort } from '@/lib/formatCurrency';
