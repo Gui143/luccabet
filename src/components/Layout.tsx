@@ -9,7 +9,7 @@ import SoundToggle from '@/components/SoundToggle';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const { user, logout, isCEO } = useAuth();
+  const { user, logout } = useAuth();
   const [showAdmin, setShowAdmin] = useState(false);
 
   const isAdminEmail = user?.email === 'prudencioguilherme7@gmail.com';
