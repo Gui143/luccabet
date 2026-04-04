@@ -170,10 +170,10 @@ const BettingMarkets: React.FC = () => {
   const OddButton: React.FC<{ label: string; odd: number; onClick: () => void }> = ({ label, odd, onClick }) => (
     <button
       onClick={onClick}
-      className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer group"
+      className="flex items-center justify-between p-2.5 rounded-md border border-border bg-secondary/60 hover:bg-primary/15 hover:border-primary/40 transition-all cursor-pointer group"
     >
-      <span className="text-sm text-foreground">{label}</span>
-      <span className="text-sm font-bold text-primary group-hover:text-primary">{odd.toFixed(2)}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs font-bold text-primary">{odd.toFixed(2)}</span>
     </button>
   );
 
@@ -202,12 +202,12 @@ const BettingMarkets: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-        <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-        APOSTE EM TIMES VIRTUAIS
+      <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+        <Trophy className="h-5 w-5 text-primary" />
+        Eventos populares
       </h3>
 
-      <div className="grid gap-4">
+      <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
         {games.map((game) => {
           const isExpanded = expandedGame === game.id;
           const players = gamePlayers[game.id] || [];
@@ -215,57 +215,70 @@ const BettingMarkets: React.FC = () => {
           const playersB = players.filter(p => p.team_side === 'b');
 
           return (
-            <Card key={game.id} className="overflow-hidden border-border bg-card">
+            <Card key={game.id} className="overflow-hidden border-border bg-card min-w-[280px] sm:min-w-[300px] snap-start shrink-0">
               <CardContent className="p-0">
                 {/* Match Header */}
-                <div className="p-4 space-y-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="w-2 h-2 bg-success rounded-full animate-pulse shrink-0"></span>
-                    <span className="text-xs text-success font-medium">AO VIVO</span>
-                    <span className="text-xs text-muted-foreground">• {game.championship}</span>
+                <div className="p-3 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse shrink-0"></span>
+                    <span className="text-[10px] text-muted-foreground truncate">{game.championship}</span>
                     {game.match_date && (
-                      <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(game.match_date).toLocaleDateString('pt-BR')} {new Date(game.match_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      <span className="text-[10px] text-muted-foreground ml-auto whitespace-nowrap">
+                        Hoje {new Date(game.match_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     )}
                   </div>
 
-                  <div className="font-bold text-lg">
-                    {game.team_a} <span className="text-muted-foreground font-normal">vs</span> {game.team_b}
+                  {/* Teams */}
+                  <div className="flex items-center justify-between gap-2 py-2">
+                    <div className="text-center flex-1">
+                      <div className="w-10 h-10 rounded-full bg-secondary border border-border mx-auto mb-1.5 flex items-center justify-center">
+                        <span className="text-xs font-bold">{game.team_a.slice(0, 2).toUpperCase()}</span>
+                      </div>
+                      <p className="text-xs font-medium truncate">{game.team_a}</p>
+                    </div>
+                    <div className="text-center shrink-0">
+                      <span className="text-[10px] text-muted-foreground">vs</span>
+                    </div>
+                    <div className="text-center flex-1">
+                      <div className="w-10 h-10 rounded-full bg-secondary border border-border mx-auto mb-1.5 flex items-center justify-center">
+                        <span className="text-xs font-bold">{game.team_b.slice(0, 2).toUpperCase()}</span>
+                      </div>
+                      <p className="text-xs font-medium truncate">{game.team_b}</p>
+                    </div>
                   </div>
 
-                  {/* 1X2 Market - Always visible */}
-                  <div className="grid grid-cols-3 gap-2">
+                  {/* 1X2 Odds - compact row like BetBoom */}
+                  <div className="grid grid-cols-3 gap-1.5">
                     <button
                       onClick={() => selectOdd(game, {
                         market_type: 'match_result', label: game.team_a, odd: Number(game.odd_a),
                         market_detail: { selection: 'team_a' }, selected_team: game.team_a
                       })}
-                      className="text-center p-3 rounded-lg border border-border bg-muted/30 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer group"
+                      className="text-center py-2 px-1 rounded-md border border-border bg-secondary/60 hover:bg-primary/15 hover:border-primary/40 transition-all cursor-pointer"
                     >
-                      <div className="text-xs text-muted-foreground truncate mb-1">{game.team_a}</div>
-                      <div className="text-xl font-bold text-primary">{Number(game.odd_a).toFixed(2)}</div>
+                      <div className="text-[10px] text-muted-foreground truncate mb-0.5">{game.team_a}</div>
+                      <div className="text-sm font-bold">{Number(game.odd_a).toFixed(2)}</div>
                     </button>
                     <button
                       onClick={() => selectOdd(game, {
                         market_type: 'match_result', label: 'Empate', odd: Number(game.odd_draw),
                         market_detail: { selection: 'draw' }, selected_team: 'Empate'
                       })}
-                      className="text-center p-3 rounded-lg border border-border bg-muted/30 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer group"
+                      className="text-center py-2 px-1 rounded-md border border-border bg-secondary/60 hover:bg-primary/15 hover:border-primary/40 transition-all cursor-pointer"
                     >
-                      <div className="text-xs text-muted-foreground mb-1">Empate</div>
-                      <div className="text-xl font-bold text-foreground">{Number(game.odd_draw).toFixed(2)}</div>
+                      <div className="text-[10px] text-muted-foreground mb-0.5">X</div>
+                      <div className="text-sm font-bold">{Number(game.odd_draw).toFixed(2)}</div>
                     </button>
                     <button
                       onClick={() => selectOdd(game, {
                         market_type: 'match_result', label: game.team_b, odd: Number(game.odd_b),
                         market_detail: { selection: 'team_b' }, selected_team: game.team_b
                       })}
-                      className="text-center p-3 rounded-lg border border-border bg-muted/30 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer group"
+                      className="text-center py-2 px-1 rounded-md border border-border bg-secondary/60 hover:bg-primary/15 hover:border-primary/40 transition-all cursor-pointer"
                     >
-                      <div className="text-xs text-muted-foreground truncate mb-1">{game.team_b}</div>
-                      <div className="text-xl font-bold text-primary">{Number(game.odd_b).toFixed(2)}</div>
+                      <div className="text-[10px] text-muted-foreground truncate mb-0.5">{game.team_b}</div>
+                      <div className="text-sm font-bold">{Number(game.odd_b).toFixed(2)}</div>
                     </button>
                   </div>
 
