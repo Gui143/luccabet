@@ -215,7 +215,7 @@ const BettingMarkets: React.FC = () => {
           const playersB = players.filter(p => p.team_side === 'b');
 
           return (
-            <Card key={game.id} className="overflow-hidden border-border bg-card">
+            <Card key={game.id} className="overflow-hidden border-border bg-card min-w-[280px] sm:min-w-[300px] snap-start shrink-0">
               <CardContent className="p-0">
                 {/* Match Header */}
                 <div className="p-4 space-y-3">
