@@ -202,12 +202,12 @@ const BettingMarkets: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-        <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-        APOSTE EM TIMES VIRTUAIS
+      <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+        <Trophy className="h-5 w-5 text-primary" />
+        Eventos populares
       </h3>
 
-      <div className="grid gap-4">
+      <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
         {games.map((game) => {
           const isExpanded = expandedGame === game.id;
           const players = gamePlayers[game.id] || [];
