@@ -6,43 +6,41 @@
 
 @layer base {
   :root {
-    --background: 0 0% 4%;
+    --background: 0 0% 5%;
     --foreground: 0 0% 95%;
 
-    --card: 0 0% 7%;
+    --card: 0 0% 8%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 6%;
+    --popover: 0 0% 7%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 152 100% 30%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 49 100% 50%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 14%;
+    --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 95%;
 
     --muted: 0 0% 10%;
     --muted-foreground: 0 0% 55%;
 
-    --accent: 49 100% 50%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 0 72% 51%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 100% 30%;
+    --success: 145 63% 42%;
     --success-foreground: 0 0% 100%;
 
     --border: 0 0% 14%;
-    --input: 0 0% 10%;
-    --ring: 152 100% 30%;
+    --input: 0 0% 12%;
+    --ring: 49 100% 50%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
 
-    --glow-primary: 152 100% 30%;
-    --glow-accent: 49 100% 50%;
-
-    --brazil-blue: 220 100% 23%;
+    --glow-primary: 49 100% 50%;
+    --glow-accent: 0 72% 51%;
   }
 
   * {
@@ -52,6 +50,21 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(0 0% 5%);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 20%);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 30%);
   }
 }
 
@@ -65,31 +78,40 @@
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(152 100% 30%), hsl(49 100% 50%));
+    background: linear-gradient(135deg, hsl(49 100% 50%), hsl(0 72% 51%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .card-gradient {
-    background: linear-gradient(145deg, hsl(0 0% 7%), hsl(0 0% 9%));
+    background: linear-gradient(145deg, hsl(0 0% 8%), hsl(0 0% 10%));
   }
 
   .bet-card {
     @apply rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10;
   }
 
+  .odd-btn {
+    @apply flex flex-col items-center justify-center rounded-md border border-border bg-secondary/60 px-3 py-2 transition-all cursor-pointer;
+    @apply hover:bg-primary/15 hover:border-primary/40;
+  }
+
+  .odd-btn-active {
+    @apply bg-primary/20 border-primary/60;
+  }
+
   .plane-glow {
-    filter: drop-shadow(0 0 10px hsl(var(--primary)));
+    filter: drop-shadow(0 0 10px hsl(var(--accent)));
     animation: plane-pulse 2s ease-in-out infinite;
   }
 
   @keyframes plane-pulse {
     0%, 100% {
-      filter: drop-shadow(0 0 10px hsl(var(--primary)));
+      filter: drop-shadow(0 0 10px hsl(var(--accent)));
     }
     50% {
-      filter: drop-shadow(0 0 20px hsl(var(--primary))) drop-shadow(0 0 30px hsl(var(--primary)));
+      filter: drop-shadow(0 0 20px hsl(var(--accent))) drop-shadow(0 0 30px hsl(var(--accent)));
     }
   }
 
@@ -98,6 +120,14 @@
   }
   .vip-glow-gold {
     box-shadow: 0 0 8px hsl(49 100% 50% / 0.5), 0 0 16px hsl(49 100% 50% / 0.2);
+  }
+
+  /* Smooth transitions */
+  .hover-lift {
+    @apply transition-transform duration-200;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
   }
 }
 

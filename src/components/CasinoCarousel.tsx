@@ -1,25 +1,34 @@
 import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const slides = [
   {
-    title: '🎰 Slots Premium',
-    subtitle: 'Gire e ganhe grandes prêmios nos melhores slots da plataforma',
-    gradient: 'from-primary/40 via-primary/20 to-transparent',
-  },
-  {
-    title: '🃏 Cassino ao Vivo',
-    subtitle: 'Experimente a emoção de um cassino real com dealers profissionais',
-    gradient: 'from-amber-900/40 via-amber-900/20 to-transparent',
+    title: '🎰 Jogos da Semana',
+    subtitle: 'Os melhores slots e jogos ao vivo com bônus exclusivos',
+    gradient: 'from-yellow-600/30 via-orange-700/20 to-transparent',
+    tag: 'TOP',
+    tagColor: 'bg-red-600',
   },
   {
     title: '✈️ Aviator',
-    subtitle: 'Decole com o multiplicador e retire antes do crash!',
-    gradient: 'from-red-900/40 via-red-900/20 to-transparent',
+    subtitle: 'Decole com o multiplicador! Retire antes do crash e ganhe até 100x',
+    gradient: 'from-red-700/30 via-red-900/20 to-transparent',
+    tag: 'HOT',
+    tagColor: 'bg-primary',
   },
   {
-    title: '💎 Mines',
-    subtitle: 'Encontre diamantes e multiplique seus ganhos até 25x',
-    gradient: 'from-emerald-900/40 via-emerald-900/20 to-transparent',
+    title: '💎 Bônus de Boas-Vindas',
+    subtitle: 'Cadastre-se agora e ganhe R$ 1.000 de saldo inicial para jogar',
+    gradient: 'from-emerald-700/30 via-emerald-900/20 to-transparent',
+    tag: 'NOVO',
+    tagColor: 'bg-emerald-600',
+  },
+  {
+    title: '⚽ Apostas Esportivas',
+    subtitle: 'Aposte nos melhores campeonatos com as melhores odds do mercado',
+    gradient: 'from-blue-700/30 via-blue-900/20 to-transparent',
+    tag: 'TOP',
+    tagColor: 'bg-red-600',
   },
 ];
 
@@ -29,30 +38,48 @@ const CasinoCarousel: React.FC = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrent(c => (c + 1) % slides.length);
-    }, 4000);
+    }, 5000);
     return () => clearInterval(timer);
   }, []);
 
   const slide = slides[current];
 
+  const goNext = () => setCurrent((current + 1) % slides.length);
+  const goPrev = () => setCurrent((current - 1 + slides.length) % slides.length);
+
   return (
-    <div className="relative overflow-hidden rounded-lg border border-border bg-card h-[140px] sm:h-[180px]">
+    <div className="relative overflow-hidden rounded-xl border border-border bg-card h-[140px] sm:h-[180px] group">
       {/* Background gradient */}
       <div className={`absolute inset-0 bg-gradient-to-r ${slide.gradient} transition-all duration-700`} />
 
-      {/* Decorative elements */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-1/2 w-48 h-24 bg-primary/5 rounded-full blur-3xl" />
-
       {/* Content */}
-      <div className="relative z-10 flex flex-col justify-center h-full px-6 sm:px-10">
-        <h3 className="text-xl sm:text-2xl font-extrabold mb-1 transition-all duration-500">
+      <div className="relative z-10 flex flex-col justify-center h-full px-5 sm:px-8">
+        {slide.tag && (
+          <span className={`${slide.tagColor} text-white text-[10px] font-bold px-2 py-0.5 rounded-md w-fit mb-2`}>
+            {slide.tag}
+          </span>
+        )}
+        <h3 className="text-lg sm:text-2xl font-extrabold mb-1 transition-all duration-500">
           {slide.title}
         </h3>
-        <p className="text-sm sm:text-base text-muted-foreground max-w-md transition-all duration-500">
+        <p className="text-xs sm:text-sm text-muted-foreground max-w-lg transition-all duration-500">
           {slide.subtitle}
         </p>
       </div>
+
+      {/* Navigation arrows */}
+      <button
+        onClick={goPrev}
+        className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-secondary/80 border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+      <button
+        onClick={goNext}
+        className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-secondary/80 border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </button>
 
       {/* Dots */}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -60,8 +87,8 @@ const CasinoCarousel: React.FC = () => {
           <button
             key={i}
             onClick={() => setCurrent(i)}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              i === current ? 'bg-primary w-5' : 'bg-muted-foreground/30'
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              i === current ? 'bg-primary w-5' : 'bg-muted-foreground/30 w-1.5'
             }`}
           />
         ))}
