@@ -43,10 +43,8 @@ const Auth: React.FC = () => {
         <div className="hidden md:flex flex-col justify-center p-10 bg-gradient-to-b from-red-600 via-red-700 to-red-800 relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMjAgMEwyMCA0ME0wIDIwTDQwIDIwIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIHN0cm9rZS13aWR0aD0iMSIvPjwvc3ZnPg==')] opacity-30" />
           <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-8">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-lg font-extrabold text-primary-foreground">BB</span>
-              </div>
+            <div className="flex items-center gap-3 mb-8">
+              <img src={brazucaLogo} alt="BrazucaBet" className="w-12 h-12 rounded-xl object-cover" />
               <span className="text-2xl font-extrabold text-white">BrazucaBet</span>
             </div>
 
