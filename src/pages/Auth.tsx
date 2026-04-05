@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Shield, Headphones, Zap, Trophy } from 'lucide-react';
+import brazucaLogo from '@/assets/brazucabet-logo.png';
 
 const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
