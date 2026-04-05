@@ -37,7 +37,7 @@ const TransactionsAdmin: React.FC = () => {
   }, []);
 
   const loadTransactions = async () => {
-    let query = supabase.from('transactions').select('*, profiles(username, balance)').order('created_at', { ascending: false }).limit(100);
+    let query = supabase.from('transactions').select('*, profiles!transactions_user_id_fkey(username, balance)').order('created_at', { ascending: false }).limit(100);
     
     if (filter === 'pending') query = query.eq('status', 'pending');
     else if (filter === 'deposit') query = query.eq('type', 'deposit');

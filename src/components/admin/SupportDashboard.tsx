@@ -70,7 +70,7 @@ const SupportDashboard: React.FC = () => {
   const loadTickets = async () => {
     const { data } = await supabase
       .from('support_tickets')
-      .select('*, profiles(username)')
+      .select('*, profiles!support_tickets_user_id_fkey(username)')
       .order('created_at', { ascending: false });
     setTickets((data as Ticket[]) || []);
     setLoading(false);
