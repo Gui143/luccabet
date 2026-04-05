@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Shield, Plus, Trash2, Users, DollarSign, CheckCircle, Calendar, Settings, Gift, ToggleLeft, ToggleRight, UserCircle, Search } from 'lucide-react';
+import { Trophy, Shield, Plus, Trash2, Users, DollarSign, CheckCircle, Calendar, Settings, Gift, ToggleLeft, ToggleRight, UserCircle, Search, Headphones } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import PlayersTab from '@/components/admin/PlayersTab';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import UsersListWithBalance from '@/components/admin/UsersListWithBalance';
+import SupportDashboard from '@/components/admin/SupportDashboard';
+import TransactionsAdmin from '@/components/admin/TransactionsAdmin';
 
 interface CBFDGame {
   id: string;
