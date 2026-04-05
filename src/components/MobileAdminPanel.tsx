@@ -476,26 +476,32 @@ const MobileAdminPanel: React.FC = () => {
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="w-full grid grid-cols-7 h-auto gap-1 bg-muted/50 p-1">
-          <TabsTrigger value="dashboard" className="text-[10px] sm:text-xs py-2 px-1">
+        <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
+          <TabsTrigger value="dashboard" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
             Dashboard
           </TabsTrigger>
-          <TabsTrigger value="partidas" className="text-[10px] sm:text-xs py-2 px-1">
+          <TabsTrigger value="transacoes" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
+            💰 Finanças
+          </TabsTrigger>
+          <TabsTrigger value="suporte" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
+            🎧 Suporte
+          </TabsTrigger>
+          <TabsTrigger value="partidas" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
             Partidas
           </TabsTrigger>
-          <TabsTrigger value="times" className="text-[10px] sm:text-xs py-2 px-1">
+          <TabsTrigger value="times" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
             Times
           </TabsTrigger>
-          <TabsTrigger value="jogadores" className="text-[10px] sm:text-xs py-2 px-1">
+          <TabsTrigger value="jogadores" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
             Jogadores
           </TabsTrigger>
-          <TabsTrigger value="campeonatos" className="text-[10px] sm:text-xs py-2 px-1">
+          <TabsTrigger value="campeonatos" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
             Ligas
           </TabsTrigger>
-          <TabsTrigger value="usuarios" className="text-[10px] sm:text-xs py-2 px-1">
+          <TabsTrigger value="usuarios" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
             Usuários
           </TabsTrigger>
-          <TabsTrigger value="codigos" className="text-[10px] sm:text-xs py-2 px-1">
+          <TabsTrigger value="codigos" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
             Códigos
           </TabsTrigger>
         </TabsList>
@@ -503,6 +509,16 @@ const MobileAdminPanel: React.FC = () => {
         {/* DASHBOARD */}
         <TabsContent value="dashboard" className="mt-4">
           <AdminDashboard />
+        </TabsContent>
+
+        {/* TRANSACTIONS */}
+        <TabsContent value="transacoes" className="mt-4">
+          <TransactionsAdmin />
+        </TabsContent>
+
+        {/* SUPPORT */}
+        <TabsContent value="suporte" className="mt-4">
+          <SupportDashboard />
         </TabsContent>
 
         {/* PARTIDAS */}
