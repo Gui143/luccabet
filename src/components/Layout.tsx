@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { formatBRLShort } from '@/lib/formatCurrency';
 import MobileAdminPanel from '@/components/MobileAdminPanel';
 import SoundToggle from '@/components/SoundToggle';
+import SupportChat from '@/components/SupportChat';
+import GlobalChat from '@/components/GlobalChat';
+import brazucaLogo from '@/assets/brazucabet-logo.png';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -34,9 +37,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <div className="w-full max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between gap-2">
               <button onClick={() => setShowAdmin(false)} className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <span className="text-sm font-bold text-primary-foreground">BB</span>
-                </div>
+                <img src={brazucaLogo} alt="BrazucaBet" className="w-8 h-8 rounded-lg object-cover" />
                 <span className="text-lg font-bold text-gradient">BRAZUCABET</span>
               </button>
               <Button onClick={() => setShowAdmin(false)} variant="outline" size="sm">
@@ -57,13 +58,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Top Header */}
       <header className="border-b border-border bg-card/95 backdrop-blur-xl sticky top-0 z-50">
         <div className="w-full max-w-7xl mx-auto px-3 sm:px-4">
-          {/* Main header row */}
           <div className="flex items-center justify-between h-14 gap-3">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
-              <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-                <span className="text-sm font-extrabold text-primary-foreground">BB</span>
-              </div>
+              <img src={brazucaLogo} alt="BrazucaBet" className="w-8 h-8 rounded-md object-cover" />
               <h1 className="text-lg font-extrabold hidden sm:block">
                 <span className="text-primary">BRAZUCA</span><span className="text-foreground">BET</span>
               </h1>
@@ -97,24 +95,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               )}
             </nav>
 
-            {/* Right side: Balance + Deposit + Profile */}
+            {/* Right side */}
             <div className="flex items-center gap-2">
               <SoundToggle />
-
-              {/* Balance */}
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary border border-border">
                 <span className="font-bold text-foreground text-sm">{formatBRLShort(user.balance)}</span>
               </div>
-
-              {/* Deposit Button */}
               <Link to="/wallet">
                 <Button size="sm" className="h-8 px-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-md">
                   <Plus className="w-3.5 h-3.5 mr-1" />
                   Depositar
                 </Button>
               </Link>
-
-              {/* Profile dropdown */}
               <div className="hidden md:flex items-center">
                 <Link to="/account" className="flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-secondary/50 transition-colors">
                   <div className="w-7 h-7 rounded-full bg-secondary border border-border flex items-center justify-center">
@@ -141,9 +133,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-                <span className="text-xs font-bold text-primary-foreground">BB</span>
-              </div>
+              <img src={brazucaLogo} alt="BrazucaBet" className="w-6 h-6 rounded object-cover" />
               <span className="text-sm font-bold text-muted-foreground">BRAZUCABET</span>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -183,6 +173,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           )}
         </div>
       </nav>
+
+      {/* Chat widgets */}
+      <GlobalChat />
+      <SupportChat />
     </div>
   );
 };
