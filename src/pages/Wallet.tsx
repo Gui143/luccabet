@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Wallet as WalletIcon, Plus, Minus, Clock, CheckCircle, XCircle, Copy, QrCode, ArrowUpDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Minus, Clock, CheckCircle, XCircle, ArrowUpDown, CreditCard, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,17 +10,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatBRL } from '@/lib/formatCurrency';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
-const PIX_KEY_STATIC = 'brazucabet@pix.com.br';
+import { useSearchParams } from 'react-router-dom';
 
 const Wallet: React.FC = () => {
   const { user, updateBalance } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [pixKey, setPixKey] = useState('');
-  const [showQR, setShowQR] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Handle Stripe redirect
+  useEffect(() => {
+    const payment = searchParams.get('payment');
+    if (payment === 'success') {
+      toast.success('Pagamento confirmado! Seu saldo será atualizado em instantes.');
+    } else if (payment === 'canceled') {
+      toast.info('Pagamento cancelado.');
+    }
+  }, [searchParams]);
 
   const { data: transactions = [] } = useQuery({
     queryKey: ['transactions', user?.id],
@@ -38,44 +47,32 @@ const Wallet: React.FC = () => {
     refetchInterval: 10000,
   });
 
-  const handleDeposit = async () => {
+  const handleStripeDeposit = async () => {
     if (!user) return;
     const amount = parseFloat(depositAmount);
-    if (isNaN(amount) || amount < 1) { toast.error('Valor mínimo: R$ 1,00'); return; }
+    if (isNaN(amount) || amount < 5) {
+      toast.error('Valor mínimo: R$ 5,00');
+      return;
+    }
 
     setIsSubmitting(true);
-    const { error } = await supabase.from('transactions').insert({
-      user_id: user.id,
-      type: 'deposit',
-      amount,
-      payment_method: 'pix',
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { amount },
+      });
 
-    if (error) {
-      toast.error('Erro ao criar depósito');
-    } else {
-      setShowQR(true);
-      toast.success('Depósito criado! Aguardando aprovação do admin.');
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast.success('Redirecionando para o pagamento...');
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao criar sessão de pagamento');
     }
     setIsSubmitting(false);
-  };
-
-  const handleSimulatePayment = async () => {
-    if (!user) return;
-    const amount = parseFloat(depositAmount);
-    await updateBalance(amount);
-    
-    // Update most recent pending deposit
-    const pendingDeposit = transactions.find(t => t.type === 'deposit' && t.status === 'pending');
-    if (pendingDeposit) {
-      await supabase.from('transactions').update({ status: 'completed' }).eq('id', pendingDeposit.id);
-    }
-    
-    setShowQR(false);
-    setDepositAmount('');
-    queryClient.invalidateQueries({ queryKey: ['transactions'] });
-    toast.success('✅ Pagamento confirmado! Saldo atualizado.');
   };
 
   const handleWithdraw = async () => {
@@ -87,7 +84,7 @@ const Wallet: React.FC = () => {
 
     setIsSubmitting(true);
     await updateBalance(-amount);
-    
+
     const { error } = await supabase.from('transactions').insert({
       user_id: user.id,
       type: 'withdrawal',
@@ -97,7 +94,7 @@ const Wallet: React.FC = () => {
     });
 
     if (error) {
-      await updateBalance(amount); // refund
+      await updateBalance(amount);
       toast.error('Erro ao criar saque');
     } else {
       toast.success('Saque solicitado! Aguardando aprovação.');
@@ -106,11 +103,6 @@ const Wallet: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
     }
     setIsSubmitting(false);
-  };
-
-  const handleCopyKey = () => {
-    navigator.clipboard.writeText(PIX_KEY_STATIC);
-    toast.success('Chave PIX copiada!');
   };
 
   const getStatusIcon = (status: string) => {
@@ -129,7 +121,6 @@ const Wallet: React.FC = () => {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Balance Cards */}
         <div className="grid grid-cols-2 gap-3">
           <Card className="border-border bg-card">
             <CardContent className="pt-4 pb-3">
@@ -145,7 +136,6 @@ const Wallet: React.FC = () => {
           </Card>
         </div>
 
-        {/* Deposit/Withdraw Tabs */}
         <Tabs defaultValue="deposit">
           <TabsList className="w-full">
             <TabsTrigger value="deposit" className="flex-1"><Plus className="h-4 w-4 mr-1" /> Depositar</TabsTrigger>
@@ -157,52 +147,36 @@ const Wallet: React.FC = () => {
             <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <QrCode className="h-5 w-5 text-primary" /> Depósito via PIX
+                  <CreditCard className="h-5 w-5 text-primary" /> Depósito via Stripe
                 </CardTitle>
-                <CardDescription>Depósito mínimo: R$ 1,00</CardDescription>
+                <CardDescription>Depósito mínimo: R$ 5,00 • Pagamento seguro via cartão</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {!showQR ? (
-                  <>
-                    <Input
-                      type="number"
-                      placeholder="Valor do depósito"
-                      value={depositAmount}
-                      onChange={(e) => setDepositAmount(e.target.value)}
-                      min={1}
-                    />
-                    <div className="flex gap-2">
-                      {[50, 100, 250, 500, 1000].map(v => (
-                        <Button key={v} onClick={() => setDepositAmount(v.toString())} variant="outline" size="sm" className="flex-1 text-xs">
-                          R${v}
-                        </Button>
-                      ))}
-                    </div>
-                    <Button onClick={handleDeposit} className="w-full" disabled={isSubmitting}>
-                      <QrCode className="mr-2 h-4 w-4" /> Gerar PIX
+                <Input
+                  type="number"
+                  placeholder="Valor do depósito (R$)"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  min={5}
+                />
+                <div className="flex gap-2 flex-wrap">
+                  {[10, 25, 50, 100, 250, 500].map(v => (
+                    <Button key={v} onClick={() => setDepositAmount(v.toString())} variant="outline" size="sm" className="flex-1 min-w-[60px] text-xs">
+                      R${v}
                     </Button>
-                  </>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="bg-muted p-4 rounded-lg text-center">
-                      <p className="text-sm text-muted-foreground mb-3">QR Code PIX</p>
-                      <div className="w-48 h-48 bg-white mx-auto flex items-center justify-center rounded-lg border-4 border-primary">
-                        <div className="text-center p-4">
-                          <QrCode className="w-24 h-24 text-black mx-auto mb-2" />
-                          <p className="text-xs text-black font-mono">{formatBRL(parseFloat(depositAmount))}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 bg-muted p-3 rounded-lg">
-                      <Input value={PIX_KEY_STATIC} readOnly className="text-xs" />
-                      <Button onClick={handleCopyKey} variant="outline" size="sm"><Copy className="h-4 w-4" /></Button>
-                    </div>
-                    <Button onClick={handleSimulatePayment} className="w-full bg-emerald-600 hover:bg-emerald-700">
-                      ✅ Simular Pagamento Realizado
-                    </Button>
-                    <Button onClick={() => setShowQR(false)} variant="outline" className="w-full">Cancelar</Button>
-                  </div>
-                )}
+                  ))}
+                </div>
+                <Button onClick={handleStripeDeposit} className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <CreditCard className="mr-2 h-4 w-4" />
+                  )}
+                  Pagar com Stripe
+                </Button>
+                <p className="text-[10px] text-muted-foreground text-center">
+                  Pagamento processado de forma segura pelo Stripe. Aceitamos cartões de crédito e débito.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -249,7 +223,9 @@ const Wallet: React.FC = () => {
                         <div className="flex items-center gap-3">
                           {getStatusIcon(tx.status)}
                           <div>
-                            <p className="text-sm font-medium">{tx.type === 'deposit' ? 'Depósito PIX' : 'Saque PIX'}</p>
+                            <p className="text-sm font-medium">
+                              {tx.type === 'deposit' ? 'Depósito' : 'Saque'} {tx.payment_method === 'stripe' ? '(Stripe)' : '(PIX)'}
+                            </p>
                             <p className="text-[10px] text-muted-foreground">{new Date(tx.created_at).toLocaleString('pt-BR')}</p>
                           </div>
                         </div>

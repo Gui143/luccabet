@@ -174,8 +174,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
       </nav>
 
-      {/* Chat widgets */}
-      <GlobalChat />
+      {/* Support Chat */}
       <SupportChat />
     </div>
   );
