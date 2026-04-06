@@ -191,6 +191,9 @@ const SupportDashboard: React.FC = () => {
                       <CheckCircle className="h-3 w-3 mr-1" /> Fechar
                     </Button>
                   )}
+                  <Button onClick={deleteChatHistory} variant="destructive" size="sm" className="text-xs">
+                    <Trash2 className="h-3 w-3 mr-1" /> Apagar
+                  </Button>
                 </div>
               </div>
 
