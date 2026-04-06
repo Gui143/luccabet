@@ -117,6 +117,19 @@ const SupportDashboard: React.FC = () => {
     loadTickets();
   };
 
+  const deleteChatHistory = async () => {
+    if (!selectedTicket) return;
+    const confirmed = window.confirm('Tem certeza que deseja apagar todo o histórico deste chat?');
+    if (!confirmed) return;
+
+    await supabase.from('support_messages').delete().eq('ticket_id', selectedTicket.id);
+    await supabase.from('support_tickets').delete().eq('id', selectedTicket.id);
+    toast.success('Histórico de chat apagado');
+    setSelectedTicket(null);
+    setMessages([]);
+    loadTickets();
+  };
+
   const statusBadge = (status: string) => {
     const map: Record<string, string> = { open: 'bg-yellow-500/20 text-yellow-400', assigned: 'bg-blue-500/20 text-blue-400', closed: 'bg-muted text-muted-foreground' };
     const labels: Record<string, string> = { open: 'Aberto', assigned: 'Em atendimento', closed: 'Fechado' };
