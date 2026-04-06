@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Headphones, Send, CheckCircle } from 'lucide-react';
+import { Headphones, Send, CheckCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -117,6 +117,19 @@ const SupportDashboard: React.FC = () => {
     loadTickets();
   };
 
+  const deleteChatHistory = async () => {
+    if (!selectedTicket) return;
+    const confirmed = window.confirm('Tem certeza que deseja apagar todo o histórico deste chat?');
+    if (!confirmed) return;
+
+    await supabase.from('support_messages').delete().eq('ticket_id', selectedTicket.id);
+    await supabase.from('support_tickets').delete().eq('id', selectedTicket.id);
+    toast.success('Histórico de chat apagado');
+    setSelectedTicket(null);
+    setMessages([]);
+    loadTickets();
+  };
+
   const statusBadge = (status: string) => {
     const map: Record<string, string> = { open: 'bg-yellow-500/20 text-yellow-400', assigned: 'bg-blue-500/20 text-blue-400', closed: 'bg-muted text-muted-foreground' };
     const labels: Record<string, string> = { open: 'Aberto', assigned: 'Em atendimento', closed: 'Fechado' };
@@ -178,6 +191,9 @@ const SupportDashboard: React.FC = () => {
                       <CheckCircle className="h-3 w-3 mr-1" /> Fechar
                     </Button>
                   )}
+                  <Button onClick={deleteChatHistory} variant="destructive" size="sm" className="text-xs">
+                    <Trash2 className="h-3 w-3 mr-1" /> Apagar
+                  </Button>
                 </div>
               </div>
 

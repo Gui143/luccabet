@@ -7,7 +7,7 @@ import { formatBRLShort } from '@/lib/formatCurrency';
 import MobileAdminPanel from '@/components/MobileAdminPanel';
 import SoundToggle from '@/components/SoundToggle';
 import SupportChat from '@/components/SupportChat';
-import GlobalChat from '@/components/GlobalChat';
+
 import brazucaLogo from '@/assets/brazucabet-logo.png';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -174,8 +174,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
       </nav>
 
-      {/* Chat widgets */}
-      <GlobalChat />
+      {/* Support Chat */}
       <SupportChat />
     </div>
   );
