@@ -504,12 +504,21 @@ const MobileAdminPanel: React.FC = () => {
           <TabsTrigger value="codigos" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
             Códigos
           </TabsTrigger>
+          <TabsTrigger value="percentuais" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
+            % Ganho
+          </TabsTrigger>
         </TabsList>
 
         {/* DASHBOARD */}
         <TabsContent value="dashboard" className="mt-4">
           <AdminDashboard />
         </TabsContent>
+
+        {/* PERCENTUAIS DE GANHO/PERDA */}
+        <TabsContent value="percentuais" className="mt-4">
+          <GameOddsTab />
+        </TabsContent>
+
 
         {/* TRANSACTIONS */}
         <TabsContent value="transacoes" className="mt-4">
