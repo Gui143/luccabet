@@ -13,13 +13,13 @@ import rouletteImg from '@/assets/games/roulette.jpg';
 
 const Games: React.FC = () => {
   const games = [
-    { title: 'Gates of Olympus', provider: 'Pragmatic Play', image: gatesImg, path: '/games/fortune-tiger', odds: 'Até 5000x' },
+    { title: "Gates of Olympus", provider: "Pragmatic Play", image: gatesImg, path: "/games/fortune-tiger", odds: "Até 5000x" },
     { title: 'Aviator', provider: 'Spribe', image: aviatorImg, path: '/games/aviator', odds: 'Até 100x' },
-    { title: 'Blackjack', provider: 'BrazucaBet', image: blackjackImg, path: '/games/blackjack', odds: 'Até 2.5x', isNew: true },
-    { title: 'Baccarat', provider: 'BrazucaBet', image: baccaratImg, path: '/games/baccarat', odds: 'Até 8x' },
-    { title: 'Mines', provider: 'BrazucaBet', image: minesImg, path: '/games/mines', odds: 'Até 50x' },
-    { title: 'Slots', provider: 'BrazucaBet', image: slotsImg, path: '/games/slots', odds: 'Até 10x' },
-    { title: 'Roleta', provider: 'BrazucaBet', image: rouletteImg, path: '/games/roulette', odds: 'Até 35x' },
+    { title: 'Blackjack', provider: "BrazucaBet", image: blackjackImg, path: '/games/blackjack', odds: 'Até 2.5x', isNew: true },
+    { title: 'Baccarat', provider: "BrazucaBet", image: baccaratImg, path: '/games/baccarat', odds: 'Até 8x' },
+    { title: 'Mines', provider: "BrazucaBet", image: minesImg, path: '/games/mines', odds: 'Até 50x' },
+    { title: 'Slots', provider: "BrazucaBet", image: slotsImg, path: '/games/slots', odds: 'Até 10x' },
+    { title: 'Roleta', provider: "BrazucaBet", image: rouletteImg, path: '/games/roulette', odds: 'Até 35x' },
   ];
 
   return (

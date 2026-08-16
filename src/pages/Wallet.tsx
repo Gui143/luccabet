@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Minus, Clock, CheckCircle, XCircle, ArrowUpDown, CreditCard, Loader2 } from 'lucide-react';
+import { Plus, Minus, Clock, CheckCircle, XCircle, ArrowUpDown, QrCode, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,26 +10,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatBRL } from '@/lib/formatCurrency';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 
 const Wallet: React.FC = () => {
   const { user, updateBalance } = useAuth();
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [pixKey, setPixKey] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Handle Stripe redirect
-  useEffect(() => {
-    const payment = searchParams.get('payment');
-    if (payment === 'success') {
-      toast.success('Pagamento confirmado! Seu saldo será atualizado em instantes.');
-    } else if (payment === 'canceled') {
-      toast.info('Pagamento cancelado.');
-    }
-  }, [searchParams]);
 
   const { data: transactions = [] } = useQuery({
     queryKey: ['transactions', user?.id],
@@ -47,7 +35,7 @@ const Wallet: React.FC = () => {
     refetchInterval: 10000,
   });
 
-  const handleStripeDeposit = async () => {
+  const handlePixDeposit = async () => {
     if (!user) return;
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount < 5) {
@@ -56,23 +44,12 @@ const Wallet: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { amount },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      if (data?.url) {
-        window.open(data.url, '_blank');
-        toast.success('Redirecionando para o pagamento...');
-        queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao criar sessão de pagamento');
-    }
-    setIsSubmitting(false);
+    // Simulated PIX flow as Stripe was removed
+    setTimeout(() => {
+      toast.success('Chave PIX gerada! Copie o código para pagar.');
+      setIsSubmitting(false);
+      toast.info('Em ambiente de demonstração, o saldo deve ser atualizado manualmente.');
+    }, 1500);
   };
 
   const handleWithdraw = async () => {
@@ -147,9 +124,9 @@ const Wallet: React.FC = () => {
             <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-primary" /> Depósito via Stripe
+                  <QrCode className="h-5 w-5 text-primary" /> Depósito via PIX
                 </CardTitle>
-                <CardDescription>Depósito mínimo: R$ 5,00 • Pagamento seguro via cartão</CardDescription>
+                <CardDescription>Depósito mínimo: R$ 5,00 • Instantâneo e Seguro</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Input
@@ -166,16 +143,16 @@ const Wallet: React.FC = () => {
                     </Button>
                   ))}
                 </div>
-                <Button onClick={handleStripeDeposit} className="w-full" disabled={isSubmitting}>
+                <Button onClick={handlePixDeposit} className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <CreditCard className="mr-2 h-4 w-4" />
+                    <Plus className="mr-2 h-4 w-4" />
                   )}
-                  Pagar com Stripe
+                  Gerar QR Code PIX
                 </Button>
                 <p className="text-[10px] text-muted-foreground text-center">
-                  Pagamento processado de forma segura pelo Stripe. Aceitamos cartões de crédito e débito.
+                  Pagamento processado de forma segura. O saldo é liberado instantaneamente após a confirmação.
                 </p>
               </CardContent>
             </Card>
@@ -233,7 +210,7 @@ const Wallet: React.FC = () => {
                           <p className={`text-sm font-bold ${tx.type === 'deposit' ? 'text-emerald-500' : 'text-destructive'}`}>
                             {tx.type === 'deposit' ? '+' : '-'}{formatBRL(tx.amount)}
                           </p>
-                          <p className="text-[10px] text-muted-foreground">{statusLabel(tx.status)}</p>
+                          <p className="text-[10px] font-medium text-muted-foreground">{statusLabel(tx.status)}</p>
                         </div>
                       </div>
                     ))}
