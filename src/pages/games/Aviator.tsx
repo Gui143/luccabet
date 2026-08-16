@@ -31,7 +31,7 @@ const Aviator: React.FC = () => {
       <div className="flex-1 w-full lg:flex lg:justify-center lg:items-start lg:pt-6 lg:pb-6">
         <iframe
           src="https://demo.spribe.io/launch/aviator?currency=BRL&lang=pt"
-          className="w-full h-[calc(100vh-60px)] lg:h-[80vh] lg:max-w-4xl lg:rounded-xl lg:shadow-2xl"
+          className="w-full h-[calc(100vh-60px)] lg:h-[80vh] lg:max-w-4xl lg:rounded-xl lg:shadow-2xl brightness-95 contrast-105"
           style={{ border: 'none' }}
           allow="autoplay; fullscreen"
           allowFullScreen

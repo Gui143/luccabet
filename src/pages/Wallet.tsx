@@ -47,7 +47,7 @@ const Wallet: React.FC = () => {
     refetchInterval: 10000,
   });
 
-  const handleStripeDeposit = async () => {
+  const handlePixDeposit = async () => {
     if (!user) return;
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount < 5) {
@@ -147,7 +147,7 @@ const Wallet: React.FC = () => {
             <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-primary" /> Depósito via Stripe
+                  <CreditCard className="h-5 w-5 text-primary" /> Depósito via PIX
                 </CardTitle>
                 <CardDescription>Depósito mínimo: R$ 5,00 • Pagamento seguro via cartão</CardDescription>
               </CardHeader>
@@ -166,16 +166,16 @@ const Wallet: React.FC = () => {
                     </Button>
                   ))}
                 </div>
-                <Button onClick={handleStripeDeposit} className="w-full" disabled={isSubmitting}>
+                <Button onClick={handlePixDeposit} className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <CreditCard className="mr-2 h-4 w-4" />
                   )}
-                  Pagar com Stripe
+                  Gerar QR Code PIX
                 </Button>
                 <p className="text-[10px] text-muted-foreground text-center">
-                  Pagamento processado de forma segura pelo Stripe. Aceitamos cartões de crédito e débito.
+                  Pagamento processado de forma segura. O saldo é liberado instantaneamente após a confirmação.
                 </p>
               </CardContent>
             </Card>

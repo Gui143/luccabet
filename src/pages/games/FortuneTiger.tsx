@@ -67,7 +67,7 @@ const GatesOfOlympus: React.FC = () => {
         <div className="hidden sm:flex items-center gap-3 w-full max-w-5xl mt-4 mb-3">
           <div className="flex-1">
             <h1 className="text-xl font-bold text-foreground">Gates of Olympus</h1>
-            <p className="text-xs text-muted-foreground">Pragmatic Play • Demo</p>
+            <p className="text-xs text-muted-foreground">Pragmatic Play</p>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ const GatesOfOlympus: React.FC = () => {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Modo demonstração • Saldo fictício
+            Original Pragmatic Play • Seguro
           </p>
         </div>
       </div>
