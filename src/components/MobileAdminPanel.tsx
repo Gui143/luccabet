@@ -15,6 +15,7 @@ import AdminDashboard from '@/components/admin/AdminDashboard';
 import UsersListWithBalance from '@/components/admin/UsersListWithBalance';
 import SupportDashboard from '@/components/admin/SupportDashboard';
 import TransactionsAdmin from '@/components/admin/TransactionsAdmin';
+import GameOddsTab from '@/components/admin/GameOddsTab';
 
 interface CBFDGame {
   id: string;
