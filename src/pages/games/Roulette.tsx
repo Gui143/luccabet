@@ -41,9 +41,30 @@ const Roulette: React.FC = () => {
     // Simulate spin animation
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Generate result (0-36)
-    const result = Math.floor(Math.random() * 37);
+    // Resultado respeitando o percentual de ganho definido no painel
+    const favorPlayer = await shouldPlayerWin('roulette');
+
+    const matchesBet = (n: number) => {
+      const red = RED_NUMBERS.includes(n);
+      const even = n > 0 && n % 2 === 0;
+      switch (betType) {
+        case 'red': return red;
+        case 'black': return !red && n !== 0;
+        case 'even': return even;
+        case 'odd': return !even && n !== 0;
+        case 'number': return n === selectedNumber;
+      }
+    };
+
+    const pool: number[] = [];
+    for (let n = 0; n <= 36; n++) {
+      if (matchesBet(n) === favorPlayer) pool.push(n);
+    }
+    const result = pool.length > 0
+      ? pool[Math.floor(Math.random() * pool.length)]
+      : Math.floor(Math.random() * 37);
     setLastResult(result);
+
     setSpinning(false);
 
     const isRed = RED_NUMBERS.includes(result);
