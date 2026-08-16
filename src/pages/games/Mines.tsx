@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { shouldPlayerWin } from '@/lib/gameOdds';
 
 const GRID_SIZE = 25;
 
