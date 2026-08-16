@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { shouldPlayerWin } from '@/lib/gameOdds';
 
 const SYMBOLS = [
   { icon: Cherry, name: 'Cherry', multiplier: 2 },
@@ -46,15 +47,35 @@ const Slots: React.FC = () => {
       ]);
     }, 100);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       clearInterval(interval);
-      
-      // Final result
-      const finalReels = [
+
+      const favorPlayer = await shouldPlayerWin('slots');
+
+      // Final result respecting the configured win percentage
+      let finalReels = [
         Math.floor(Math.random() * SYMBOLS.length),
         Math.floor(Math.random() * SYMBOLS.length),
         Math.floor(Math.random() * SYMBOLS.length),
       ];
+
+      const isWinning = (r: number[]) => r[0] === r[1] || r[1] === r[2];
+
+      if (favorPlayer && !isWinning(finalReels)) {
+        const sym = Math.floor(Math.random() * SYMBOLS.length);
+        // 30% dos ganhos são jackpot (3 iguais), o resto é par
+        if (Math.random() < 0.3) {
+          finalReels = [sym, sym, sym];
+        } else {
+          let other = Math.floor(Math.random() * SYMBOLS.length);
+          if (other === sym) other = (sym + 1) % SYMBOLS.length;
+          finalReels = Math.random() < 0.5 ? [sym, sym, other] : [other, sym, sym];
+        }
+      } else if (!favorPlayer && isWinning(finalReels)) {
+        const a = 0, b = 1 % SYMBOLS.length, c = 2 % SYMBOLS.length;
+        finalReels = [a, b, c];
+      }
+
       setReels(finalReels);
       setSpinning(false);
 
@@ -67,6 +88,7 @@ const Slots: React.FC = () => {
         // Two match
         multiplier = 1.5;
       }
+
 
       if (multiplier > 0) {
         const winAmount = amount * multiplier;
