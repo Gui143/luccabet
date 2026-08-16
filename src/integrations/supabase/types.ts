@@ -434,6 +434,36 @@ export type Database = {
         }
         Relationships: []
       }
+      game_odds_settings: {
+        Row: {
+          created_at: string
+          display_name: string
+          game_key: string
+          id: string
+          is_active: boolean
+          updated_at: string
+          win_chance: number
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          game_key: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          win_chance?: number
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          game_key?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          win_chance?: number
+        }
+        Relationships: []
+      }
       game_wins: {
         Row: {
           bet_amount: number
