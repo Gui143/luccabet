@@ -15,6 +15,7 @@ import sweetBonanzaImg from '@/assets/games/sweet-bonanza.jpg';
 import aviatorImg from '@/assets/games/aviator.jpg';
 import blackjackImg from '@/assets/games/blackjack.jpg';
 import baccaratImg from '@/assets/games/baccarat.jpg';
+import pokerImg from '@/assets/games/poker.jpg';
 import minesImg from '@/assets/games/mines.jpg';
 import slotsImg from '@/assets/games/slots.jpg';
 import rouletteImg from '@/assets/games/roulette.jpg';
@@ -26,6 +27,7 @@ const Home: React.FC = () => {
     { title: 'Aviator', provider: 'Spribe', path: '/games/aviator', image: aviatorImg },
     { title: 'Blackjack', provider: 'BrazucaBet', path: '/games/blackjack', image: blackjackImg },
     { title: 'Baccarat', provider: 'BrazucaBet', path: '/games/baccarat', image: baccaratImg },
+    { title: "Poker Texas Hold'em", provider: 'BrazucaBet', path: '/games/poker', image: pokerImg },
     { title: 'Mines', provider: 'BrazucaBet', path: '/games/mines', image: minesImg },
     { title: 'Slots', provider: 'BrazucaBet', path: '/games/slots', image: slotsImg },
     { title: 'Roleta', provider: 'BrazucaBet', path: '/games/roulette', image: rouletteImg },

@@ -8,6 +8,7 @@ import sweetBonanzaImg from '@/assets/games/sweet-bonanza.jpg';
 import aviatorImg from '@/assets/games/aviator.jpg';
 import blackjackImg from '@/assets/games/blackjack.jpg';
 import baccaratImg from '@/assets/games/baccarat.jpg';
+import pokerImg from '@/assets/games/poker.jpg';
 import minesImg from '@/assets/games/mines.jpg';
 import slotsImg from '@/assets/games/slots.jpg';
 import rouletteImg from '@/assets/games/roulette.jpg';
@@ -17,8 +18,9 @@ const Games: React.FC = () => {
     { title: "Gates of Olympus", provider: "Pragmatic Play", image: gatesImg, path: "/games/fortune-tiger", odds: "Até 5000x" },
     { title: "Sweet Bonanza", provider: "Pragmatic Play", image: sweetBonanzaImg, path: "/games/sweet-bonanza", odds: "Até 21.175x", isNew: true },
     { title: 'Aviator', provider: 'Spribe', image: aviatorImg, path: '/games/aviator', odds: 'Até 100x' },
-    { title: 'Blackjack', provider: "BrazucaBet", image: blackjackImg, path: '/games/blackjack', odds: 'Até 2.5x', isNew: true },
+    { title: 'Blackjack', provider: "BrazucaBet", image: blackjackImg, path: '/games/blackjack', odds: 'Até 2.5x' },
     { title: 'Baccarat', provider: "BrazucaBet", image: baccaratImg, path: '/games/baccarat', odds: 'Até 8x' },
+    { title: "Poker Texas Hold'em", provider: "BrazucaBet", image: pokerImg, path: '/games/poker', odds: 'Multi-potes', isNew: true },
     { title: 'Mines', provider: "BrazucaBet", image: minesImg, path: '/games/mines', odds: 'Até 50x' },
     { title: 'Slots', provider: "BrazucaBet", image: slotsImg, path: '/games/slots', odds: 'Até 10x' },
     { title: 'Roleta', provider: "BrazucaBet", image: rouletteImg, path: '/games/roulette', odds: 'Até 35x' },

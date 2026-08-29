@@ -17,6 +17,7 @@ import GatesOfOlympus from "./pages/games/GatesOfOlympus";
 import SweetBonanza from "./pages/games/SweetBonanza";
 import Blackjack from "./pages/games/Blackjack";
 import Baccarat from "./pages/games/Baccarat";
+import Poker from "./pages/games/Poker";
 import Wallet from "./pages/Wallet";
 import MyBets from "./pages/MyBets";
 import Account from "./pages/Account";
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/games/sweet-bonanza" element={<ProtectedRoute><SweetBonanza /></ProtectedRoute>} />
               <Route path="/games/blackjack" element={<ProtectedRoute><Blackjack /></ProtectedRoute>} />
               <Route path="/games/baccarat" element={<ProtectedRoute><Baccarat /></ProtectedRoute>} />
+              <Route path="/games/poker" element={<ProtectedRoute><Poker /></ProtectedRoute>} />
               <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
               <Route path="/my-bets" element={<ProtectedRoute><MyBets /></ProtectedRoute>} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
