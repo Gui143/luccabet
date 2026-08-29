@@ -12,6 +12,7 @@ import '../../../models/poker_enums.dart';
 import '../../../shared/utils/app_colors.dart';
 import '../../../shared/utils/formatters.dart';
 import '../../../shared/widgets/playing_card_widget.dart';
+import 'chip_widget.dart';
 import '../../../shared/widgets/player_avatar_widget.dart';
 
 class PlayerSeatWidget extends StatelessWidget {
@@ -116,9 +117,19 @@ class PlayerSeatWidget extends StatelessWidget {
                           ),
                       ],
                     ),
-                    Text(
-                      '🪙 ${Formatters.chips(player.stack.value)}',
-                      style: const TextStyle(color: AppColors.gold, fontSize: 13, fontWeight: FontWeight.w600),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const ChipWidget(size: 16, color: AppColors.gold),
+                        const SizedBox(width: 5),
+                        Text(
+                          Formatters.chips(player.stack.value),
+                          style: const TextStyle(
+                              color: AppColors.gold,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ),
                   ],
                 ),
