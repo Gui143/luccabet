@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { shouldPlayerWin } from '@/lib/gameOdds';
+import { recordGameOutcome } from '@/lib/gameOutcomes';
 
 const SYMBOLS = [
   { icon: Cherry, name: 'Cherry', multiplier: 2 },
@@ -94,7 +95,7 @@ const Slots: React.FC = () => {
         const winAmount = amount * multiplier;
         updateBalance(winAmount);
         setLastWin(winAmount);
-        
+
         addBet({
           game: 'Slots',
           amount,
@@ -102,8 +103,9 @@ const Slots: React.FC = () => {
           result: 'win',
           profit: winAmount - amount,
         });
+        recordGameOutcome({ userId: user?.id, gameName: 'Slots', betAmount: amount, multiplier, winAmount });
 
-        toast.success(`🎰 Win! You won $${winAmount.toFixed(2)}`);
+        toast.success(`🎰 Você ganhou R$${winAmount.toFixed(2)}!`);
       } else {
         addBet({
           game: 'Slots',
@@ -112,8 +114,9 @@ const Slots: React.FC = () => {
           result: 'loss',
           profit: -amount,
         });
-        
-        toast.error('No match. Try again!');
+        recordGameOutcome({ userId: user?.id, gameName: 'Slots', betAmount: amount, multiplier: 0, winAmount: 0 });
+
+        toast.error('Sem combinação. Tente de novo!');
       }
     }, spinDuration);
   };

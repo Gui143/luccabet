@@ -8,6 +8,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { shouldPlayerWin } from '@/lib/gameOdds';
+import { recordGameOutcome } from '@/lib/gameOutcomes';
 
 const GRID_SIZE = 25;
 
@@ -74,8 +75,12 @@ const Mines: React.FC = () => {
         result: 'loss',
         profit: -parseFloat(betAmount),
       });
-      
-      toast.error('💥 Boom! You hit a bomb!');
+      recordGameOutcome({
+        userId: user?.id, gameName: 'Mines',
+        betAmount: parseFloat(betAmount), multiplier: 0, winAmount: 0,
+      });
+
+      toast.error('💥 Boom! Você pisou numa mina!');
     } else {
       // Safe cell - increase multiplier
       const newMultiplier = 1 + (newRevealed.size * 0.2);
@@ -97,10 +102,14 @@ const Mines: React.FC = () => {
       result: 'win',
       profit: winAmount - parseFloat(betAmount),
     });
+    recordGameOutcome({
+      userId: user?.id, gameName: 'Mines',
+      betAmount: parseFloat(betAmount), multiplier: currentMultiplier, winAmount,
+    });
 
     setGameActive(false);
     setGameOver(true);
-    toast.success(`💎 Cashed out! Won $${winAmount.toFixed(2)}`);
+    toast.success(`💎 Retirou ${winAmount.toFixed(2)}!`);
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatBRLShort } from '@/lib/formatCurrency';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { shouldPlayerWin } from '@/lib/gameOdds';
+import { recordGameOutcome } from '@/lib/gameOutcomes';
 
 type BetChoice = 'player' | 'banker' | 'tie' | null;
 type GameState = 'betting' | 'dealing' | 'result';
@@ -26,10 +28,22 @@ const getCardValue = (rank: string): number => {
   return parseInt(rank);
 };
 
-const randomCard = (): PlayingCard => {
+const cardForValue = (value: number): PlayingCard => {
   const suit = SUITS[Math.floor(Math.random() * 4)];
-  const rank = RANKS[Math.floor(Math.random() * 13)];
-  return { suit, rank, value: getCardValue(rank) };
+  let rank: string;
+  if (value === 0) rank = ['10', 'J', 'Q', 'K'][Math.floor(Math.random() * 4)];
+  else if (value === 1) rank = 'A';
+  else rank = String(value);
+  return { suit, rank, value };
+};
+
+const randomCard = (): PlayingCard => cardForValue(Math.floor(Math.random() * 10));
+
+// Carta enviesada pela % de ganho do painel admin
+const biasedCard = (high: boolean): PlayingCard => {
+  // high: valores 6-9 (mão forte); low: valores 0-3 (mão fraca)
+  const pool = high ? [6, 7, 8, 9] : [0, 1, 2, 3];
+  return cardForValue(pool[Math.floor(Math.random() * pool.length)]);
 };
 
 const handTotal = (cards: PlayingCard[]): number => {
@@ -60,6 +74,8 @@ const Baccarat: React.FC = () => {
   const [playerCards, setPlayerCards] = useState<PlayingCard[]>([]);
   const [bankerCards, setBankerCards] = useState<PlayingCard[]>([]);
   const [winner, setWinner] = useState<string>('');
+  // Percentual de ganho definido no painel admin
+  const favorRef = useRef(false);
 
   const betAmount = parseFloat(betAmountStr) || 0;
 
@@ -76,22 +92,35 @@ const Baccarat: React.FC = () => {
     if (betAmount > (user?.balance || 0)) { toast.error('Saldo insuficiente'); return; }
 
     await updateBalance(-betAmount);
+
+    // Percentual de ganho do painel admin
+    favorRef.current = await shouldPlayerWin('baccarat');
+    const favor = favorRef.current;
+    const betOnPlayer = betChoice === 'player';
+    const betOnBanker = betChoice === 'banker';
+    const betOnTie = betChoice === 'tie';
+
     setGameState('dealing');
 
-    const pCards = [randomCard(), randomCard()];
-    const bCards = [randomCard(), randomCard()];
+    // Cartas iniciais enviesadas: mão forte para quem o jogador apostou (favor)
+    // ou mão fraca (contra)
+    const playerStrong = favor ? betOnPlayer || betOnTie : betOnBanker;
+    const pCards = [biasedCard(playerStrong), biasedCard(playerStrong)];
+    const bankerStrong = favor ? betOnBanker || betOnTie : betOnPlayer;
+    const bCards = [biasedCard(bankerStrong), biasedCard(bankerStrong)];
     setPlayerCards(pCards);
     setBankerCards(bCards);
 
     setTimeout(() => {
-      let pTotal = handTotal(pCards);
+      const pTotal = handTotal(pCards);
       let bTotal = handTotal(bCards);
 
       if (pTotal >= 8 || bTotal >= 8) { finishRound(pCards, bCards); return; }
 
       let playerDrew: PlayingCard | null = null;
       if (pTotal <= 5) {
-        playerDrew = randomCard();
+        const playerWantsHigh = favor ? (betOnPlayer || betOnTie) : betOnBanker;
+        playerDrew = biasedCard(playerWantsHigh);
         pCards.push(playerDrew);
         setPlayerCards([...pCards]);
       }
@@ -99,7 +128,11 @@ const Baccarat: React.FC = () => {
       setTimeout(() => {
         bTotal = handTotal(bCards);
         if (!playerDrew) {
-          if (bTotal <= 5) { bCards.push(randomCard()); setBankerCards([...bCards]); }
+          if (bTotal <= 5) {
+            const bankerWantsHigh = favor ? (betOnBanker || betOnTie) : betOnPlayer;
+            bCards.push(biasedCard(bankerWantsHigh));
+            setBankerCards([...bCards]);
+          }
         } else {
           const p3v = playerDrew.value;
           let bankerDraws = false;
@@ -108,7 +141,11 @@ const Baccarat: React.FC = () => {
           else if (bTotal === 4 && [2, 3, 4, 5, 6, 7].includes(p3v)) bankerDraws = true;
           else if (bTotal === 5 && [4, 5, 6, 7].includes(p3v)) bankerDraws = true;
           else if (bTotal === 6 && [6, 7].includes(p3v)) bankerDraws = true;
-          if (bankerDraws) { bCards.push(randomCard()); setBankerCards([...bCards]); }
+          if (bankerDraws) {
+            const bankerWantsHigh = favor ? (betOnBanker || betOnTie) : betOnPlayer;
+            bCards.push(biasedCard(bankerWantsHigh));
+            setBankerCards([...bCards]);
+          }
         }
         setTimeout(() => finishRound(pCards, bCards), 800);
       }, 600);
@@ -140,7 +177,9 @@ const Baccarat: React.FC = () => {
         });
       }
     } else {
-      addBet({ game: 'Baccarat', amount: betAmount, odds: PAYOUTS[betChoice!], result: 'loss', profit: -betAmount });
+      addBet({ game: 'Baccarat', amount: betAmount, odds: 0, result: 'loss', profit: -betAmount });
+      // registra a perda para o painel admin (lucro da casa / volume por jogo)
+      recordGameOutcome({ userId: user?.id, gameName: 'Baccarat', betAmount, multiplier: 0, winAmount: 0 });
       toast.error(`Perdeu! ${result === 'tie' ? 'Empate' : result === 'player' ? 'Jogador' : 'Banqueiro'} ganhou.`);
     }
   };

@@ -434,6 +434,39 @@ export type Database = {
         }
         Relationships: []
       }
+      app_themes: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          image_url: string
+          is_active: boolean
+          sort_order: number
+          theme_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          image_url: string
+          is_active?: boolean
+          sort_order?: number
+          theme_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          sort_order?: number
+          theme_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       game_odds_settings: {
         Row: {
           created_at: string

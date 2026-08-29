@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Games from "./pages/Games";
@@ -12,7 +13,7 @@ import Mines from "./pages/games/Mines";
 import Slots from "./pages/games/Slots";
 import Roulette from "./pages/games/Roulette";
 import Aviator from "./pages/games/Aviator";
-import GatesOfOlympus from "./pages/games/FortuneTiger";
+import GatesOfOlympus from "./pages/games/GatesOfOlympus";
 import SweetBonanza from "./pages/games/SweetBonanza";
 import Blackjack from "./pages/games/Blackjack";
 import Baccarat from "./pages/games/Baccarat";
@@ -34,6 +35,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <WalletProvider>
+       <ThemeProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner position="top-center" />
@@ -59,6 +61,7 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
+       </ThemeProvider>
       </WalletProvider>
     </AuthProvider>
   </QueryClientProvider>
