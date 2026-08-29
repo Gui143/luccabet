@@ -9,6 +9,7 @@ import DailySpin from '@/components/DailySpin';
 import Leaderboard from '@/components/Leaderboard';
 
 import gatesImg from '@/assets/games/gates-of-olympus.jpg';
+import sweetBonanzaImg from '@/assets/games/sweet-bonanza.jpg';
 import aviatorImg from '@/assets/games/aviator.jpg';
 import blackjackImg from '@/assets/games/blackjack.jpg';
 import baccaratImg from '@/assets/games/baccarat.jpg';
@@ -19,6 +20,7 @@ import rouletteImg from '@/assets/games/roulette.jpg';
 const Home: React.FC = () => {
   const popularGames = [
     { title: 'Gates of Olympus', provider: 'Pragmatic Play', path: '/games/fortune-tiger', image: gatesImg },
+    { title: 'Sweet Bonanza', provider: 'Pragmatic Play', path: '/games/sweet-bonanza', image: sweetBonanzaImg },
     { title: 'Aviator', provider: 'Spribe', path: '/games/aviator', image: aviatorImg },
     { title: 'Blackjack', provider: 'BrazucaBet', path: '/games/blackjack', image: blackjackImg },
     { title: 'Baccarat', provider: 'BrazucaBet', path: '/games/baccarat', image: baccaratImg },

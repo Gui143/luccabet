@@ -157,7 +157,7 @@ const BettingMarkets: React.FC = () => {
       }
 
       await updateBalance(-amount);
-      toast.success(`Aposta de € ${amount.toFixed(2)} registrada!`);
+      toast.success(`Aposta de R$ ${amount.toFixed(2)} registrada!`);
       setShowBetSlip(false);
       setSelectedBet(null);
     } catch (error: any) {
@@ -504,7 +504,7 @@ const BettingMarkets: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Valor da Aposta (€)</Label>
+                <Label>Valor da Aposta (R$)</Label>
                 <Input
                   type="number"
                   value={betAmount}
@@ -524,7 +524,7 @@ const BettingMarkets: React.FC = () => {
                 <div className="p-3 rounded-lg bg-success/10 border border-success/20">
                   <p className="text-xs text-muted-foreground">Retorno Potencial</p>
                   <p className="text-xl font-bold text-success">
-                    € {(parseFloat(betAmount) * selectedBet.selection.odd).toFixed(2)}
+                    R$ {(parseFloat(betAmount) * selectedBet.selection.odd).toFixed(2)}
                   </p>
                 </div>
               )}

@@ -201,7 +201,7 @@ const MobileAdminPanel: React.FC = () => {
     } else if (data?.error) {
       toast.error(data.error);
     } else {
-      toast.success(`Creditado € ${amount.toFixed(2)} para ${username}`);
+      toast.success(`Creditado R$ ${amount.toFixed(2)} para ${username}`);
       setUsername('');
       setCreditAmount('');
       loadOnlineUsers();
@@ -822,7 +822,7 @@ const MobileAdminPanel: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Bônus (€)</Label>
+                  <Label className="text-xs">Bônus (R$)</Label>
                   <Input
                     type="number"
                     value={promoBonus}
@@ -874,7 +874,7 @@ const MobileAdminPanel: React.FC = () => {
                   <div className="min-w-0 flex-1">
                     <p className="font-mono font-bold text-sm">{promo.code}</p>
                     <p className="text-xs text-muted-foreground">
-                      Bônus: € {Number(promo.bonus_amount).toFixed(2)}
+                      Bônus: R$ {Number(promo.bonus_amount).toFixed(2)}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Usos: {promo.current_uses}{promo.max_uses ? `/${promo.max_uses}` : ' (ilimitado)'}

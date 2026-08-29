@@ -30,7 +30,7 @@ const Account: React.FC = () => {
     if (error) { toast.error(error.message || 'Erro ao resgatar código'); }
     else if (data?.error) { toast.error(data.error); }
     else if (data?.success) {
-      toast.success(`Código resgatado! +€ ${Number(data.bonus).toFixed(2)} adicionados ao seu saldo`);
+      toast.success(`Código resgatado! +R$ ${Number(data.bonus).toFixed(2)} adicionados ao seu saldo`);
       setRedeemCode('');
       window.location.reload();
     }

@@ -326,7 +326,7 @@ const Blackjack: React.FC = () => {
             {gameState === 'betting' && (
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">Valor da Aposta (€)</label>
+                  <label className="text-sm text-muted-foreground mb-1 block">Valor da Aposta (R$)</label>
                   <Input
                     type="number"
                     value={betAmount}

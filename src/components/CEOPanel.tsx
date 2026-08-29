@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { formatBRL } from '@/lib/formatCurrency';
 
 interface PromoCode {
   id: string;
@@ -59,6 +60,8 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
   const [creditAmount, setCreditAmount] = useState('');
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
   const [isCrediting, setIsCrediting] = useState(false);
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
   
   // CBFD state
   const [cbfdGames, setCbfdGames] = useState<CBFDGame[]>([]);
@@ -123,8 +126,19 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
       loadCBFDGames(),
       loadCBFDTeams(),
       loadCBFDChampionships(),
-      loadPromoCodes()
+      loadPromoCodes(),
+      loadStats()
     ]);
+  };
+
+  const loadStats = async () => {
+    const [usersRes, balancesRes] = await Promise.all([
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('profiles').select('balance'),
+    ]);
+    setTotalUsers(usersRes.count || 0);
+    const sum = (balancesRes.data || []).reduce((s, p: any) => s + Number(p.balance || 0), 0);
+    setTotalBalance(sum);
   };
 
   const loadPromoCodes = async () => {
@@ -262,7 +276,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
     } else if (data?.error) {
       toast.error(data.error);
     } else {
-      toast.success(`Creditado € ${amount.toFixed(2)} para ${username}`);
+      toast.success(`Creditado R$ ${amount.toFixed(2)} para ${username}`);
       setUsername('');
       setCreditAmount('');
       loadOnlineUsers();
@@ -510,7 +524,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                 <DollarSign className="h-4 w-4 text-primary shrink-0" />
                 <span className="text-xs text-muted-foreground truncate">Tesouraria</span>
               </div>
-              <div className="text-lg sm:text-xl font-bold text-primary">€ 125.450</div>
+              <div className="text-lg sm:text-xl font-bold text-primary">{formatBRL(totalBalance)}</div>
             </CardContent>
           </Card>
           <Card className="border-primary/30 bg-card/80">
@@ -519,7 +533,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                 <Users className="h-4 w-4 text-primary shrink-0" />
                 <span className="text-xs text-muted-foreground truncate">Usuários</span>
               </div>
-              <div className="text-lg sm:text-xl font-bold text-primary">1,247</div>
+              <div className="text-lg sm:text-xl font-bold text-primary">{totalUsers.toLocaleString('pt-BR')}</div>
             </CardContent>
           </Card>
         </div>
@@ -789,7 +803,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                 />
               </div>
               <div>
-                <Label className="text-xs">Bônus (€)</Label>
+                <Label className="text-xs">Bônus (R$)</Label>
                 <Input
                   type="number"
                   value={promoBonus}
@@ -833,7 +847,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                   <div className="min-w-0 flex-1">
                     <p className="font-mono font-bold text-sm">{promo.code}</p>
                     <p className="text-xs text-muted-foreground">
-                      € {Number(promo.bonus_amount).toFixed(2)} • Usos: {promo.current_uses}{promo.max_uses ? `/${promo.max_uses}` : ''}
+                      R$ {Number(promo.bonus_amount).toFixed(2)} • Usos: {promo.current_uses}{promo.max_uses ? `/${promo.max_uses}` : ''}
                       {promo.expires_at && ` • Exp: ${new Date(promo.expires_at).toLocaleDateString('pt-BR')}`}
                     </p>
                   </div>
@@ -889,7 +903,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="amount" className="text-xs">Valor (€)</Label>
+                  <Label htmlFor="amount" className="text-xs">Valor (R$)</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -923,7 +937,7 @@ const CEOPanel: React.FC<CEOPanelProps> = ({ isOpen, onClose }) => {
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-sm font-bold text-primary">€ {parseFloat(user.balance).toFixed(2)}</p>
+                        <p className="text-sm font-bold text-primary">R$ {parseFloat(user.balance).toFixed(2)}</p>
                         <span className="text-xs text-green-500">● Online</span>
                       </div>
                     </div>
