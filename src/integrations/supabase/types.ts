@@ -10,10 +10,43 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      app_themes: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          image_url: string
+          is_active: boolean
+          sort_order: number
+          theme_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          image_url: string
+          is_active?: boolean
+          sort_order?: number
+          theme_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          sort_order?: number
+          theme_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       aviator_rounds: {
         Row: {
           crash_point: number
@@ -430,39 +463,6 @@ export type Database = {
           game_key?: string
           id?: string
           image_url?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      app_themes: {
-        Row: {
-          created_at: string
-          display_name: string
-          id: string
-          image_url: string
-          is_active: boolean
-          sort_order: number
-          theme_key: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          display_name: string
-          id?: string
-          image_url: string
-          is_active?: boolean
-          sort_order?: number
-          theme_key: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          display_name?: string
-          id?: string
-          image_url?: string
-          is_active?: boolean
-          sort_order?: number
-          theme_key?: string
           updated_at?: string
         }
         Relationships: []
