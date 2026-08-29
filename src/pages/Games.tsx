@@ -4,6 +4,7 @@ import { Play, Flame } from 'lucide-react';
 import Layout from '@/components/Layout';
 
 import gatesImg from '@/assets/games/gates-of-olympus.jpg';
+import sweetBonanzaImg from '@/assets/games/sweet-bonanza.jpg';
 import aviatorImg from '@/assets/games/aviator.jpg';
 import blackjackImg from '@/assets/games/blackjack.jpg';
 import baccaratImg from '@/assets/games/baccarat.jpg';
@@ -14,6 +15,7 @@ import rouletteImg from '@/assets/games/roulette.jpg';
 const Games: React.FC = () => {
   const games = [
     { title: "Gates of Olympus", provider: "Pragmatic Play", image: gatesImg, path: "/games/fortune-tiger", odds: "Até 5000x" },
+    { title: "Sweet Bonanza", provider: "Pragmatic Play", image: sweetBonanzaImg, path: "/games/sweet-bonanza", odds: "Até 21.175x", isNew: true },
     { title: 'Aviator', provider: 'Spribe', image: aviatorImg, path: '/games/aviator', odds: 'Até 100x' },
     { title: 'Blackjack', provider: "BrazucaBet", image: blackjackImg, path: '/games/blackjack', odds: 'Até 2.5x', isNew: true },
     { title: 'Baccarat', provider: "BrazucaBet", image: baccaratImg, path: '/games/baccarat', odds: 'Até 8x' },

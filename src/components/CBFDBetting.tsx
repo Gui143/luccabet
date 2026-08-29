@@ -148,7 +148,7 @@ const CBFDBetting: React.FC = () => {
       // Update local balance
       await updateBalance(-amount);
 
-      toast.success(`Aposta de € ${amount.toFixed(2)} em ${getSelectedTeamLabel()} registrada!`);
+      toast.success(`Aposta de R$ ${amount.toFixed(2)} em ${getSelectedTeamLabel()} registrada!`);
       setShowBetDialog(false);
       setSelectedGame(null);
       setBetType('');
@@ -269,7 +269,7 @@ const CBFDBetting: React.FC = () => {
 
             {/* Amount */}
             <div className="space-y-2">
-              <Label>Valor da Aposta (€)</Label>
+              <Label>Valor da Aposta (R$)</Label>
               <Input
                 type="number"
                 value={betAmount}
@@ -290,7 +290,7 @@ const CBFDBetting: React.FC = () => {
               <div className="p-3 rounded-lg bg-secondary/20 border border-secondary/30">
                 <p className="text-sm text-muted-foreground">Ganho Potencial:</p>
                 <p className="text-xl font-bold text-secondary">
-                  € {(parseFloat(betAmount) * getSelectedOdd()).toFixed(2)}
+                  R$ {(parseFloat(betAmount) * getSelectedOdd()).toFixed(2)}
                 </p>
               </div>
             )}

@@ -8,14 +8,14 @@ import { toast } from 'sonner';
 import { formatBRLShort } from '@/lib/formatCurrency';
 
 const PRIZES = [
-  { label: '€1', value: 1, color: '#e10600' },
+  { label: 'R$1', value: 1, color: '#e10600' },
   { label: 'Tente\nNovamente', value: 0, color: '#1a1a2e' },
-  { label: '€5', value: 5, color: '#16213e' },
+  { label: 'R$5', value: 5, color: '#16213e' },
   { label: 'Tente\nNovamente', value: 0, color: '#1a1a2e' },
-  { label: '€2', value: 2, color: '#0f3460' },
+  { label: 'R$2', value: 2, color: '#0f3460' },
   { label: 'Tente\nNovamente', value: 0, color: '#1a1a2e' },
-  { label: '€10', value: 10, color: '#e10600' },
-  { label: '€0.50', value: 0.5, color: '#16213e' },
+  { label: 'R$10', value: 10, color: '#e10600' },
+  { label: 'R$0,50', value: 0.5, color: '#16213e' },
 ];
 
 const DailySpin: React.FC = () => {
