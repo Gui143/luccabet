@@ -26,6 +26,16 @@ arquitetura **modular feature-first**, separação estrita entre **lógica
 - **Determinação do vencedor** no showdown; se todos foldam, o sobrevivente
   leva o pote sem showdown.
 - **Oponentes com IA** (bots) para o modo demo/jogável.
+- **Dois modos de jogo** (tela de lobby): **Vs Bots** (offline/IA) e
+  **Online** (multiplayer via WebSocket — com sala simulada quando não há
+  servidor configurado).
+- **Slider de raise ARRASTÁVEL por gesto** (`RaiseSliderWidget`): track
+  customizada com arraste/toque, háptica a cada passo e atalhos Min / ½ pote /
+  Pote / All-in.
+- **Sons** processuais (ficha, carta, clique, raise, fold, "sua vez", vitória
+  e derrota) via `audioplayers`, com **mute** e efeitos tácteis (haptics).
+- **Fichas animadas**: pilhas de fichas, pote com contagem/pulse e
+  **fichas voadoras** (assento ➜ pote nas apostas; pote ➜ vencedor no showdown).
 
 O avaliador de mãos e a lógica de divisão de potes foram validados com dezenas
 de casos de teste (ver `test/`).
@@ -50,24 +60,37 @@ poker_module/
 │   │   │   └── services/
 │   │   │       ├── deck_service.dart          # baralho/embaralho/distribuição
 │   │   │       ├── hand_evaluator_service.dart# ⭐ avaliação das 7 cartas
-│   │   │       ├── socket_service.dart        # abstração WebSocket (real + mock)
-│   │   │       └── game_repository.dart       # fronteira socket <-> engine (eventos JSON)
-│   │   └── game_table/                   # 👉 INTERFACE (frontend)
-│   │       ├── game_table_controller.dart     # ViewModel: estado visual, censura de nomes
-│   │       ├── bindings/game_table_binding.dart  # injeção de dependências GetX
-│   │       ├── views/game_table_screen.dart   # tela principal (Stack: feltro, cartas, jogadores)
-│   │       └── widgets/
-│   │           ├── player_seat_widget.dart
-│   │           ├── community_cards_widget.dart
-│   │           └── action_bar_widget.dart
+│   │   │       ├── socket_service.dart        # WebSocket real + mock (bots) + simulado (online demo)
+│   │   │       ├── game_repository.dart       # fronteira socket <-> engine (eventos JSON)
+│   │   │       └── game_events.dart           # GameEventBus (domain events p/ som/animação)
+│   │   ├── game_table/                   # 👉 INTERFACE (frontend)
+│   │   │   ├── game_table_controller.dart     # ViewModel: estado visual, censura, modo
+│   │   │   ├── chip_fly_controller.dart       # fichas voadoras (assento ⇄ pote)
+│   │   │   ├── table_layout.dart              # posições dos assentos/pote (compartilhado)
+│   │   │   ├── bindings/game_table_binding.dart
+│   │   │   ├── views/game_table_screen.dart
+│   │   │   └── widgets/
+│   │   │       ├── player_seat_widget.dart
+│   │   │       ├── community_cards_widget.dart
+│   │   │       ├── action_bar_widget.dart     # Fold/Check/Call/Raise
+│   │   │       ├── raise_slider_widget.dart   # ⭐ slider gestual arrastável + aposta rápida
+│   │   │       ├── flying_chips_overlay.dart  # overlay das fichas + pote animado
+│   │   │       ├── chip_widget.dart           # ficha/pilha de fichas
+│   │   │       └── ...
+│   │   └── lobby/                        # 👉 Tela de entrada (escolhe bots/online)
+│   │       ├── lobby_screen.dart
+│   │       └── lobby_controller.dart
 │   └── shared/                           # 👉 COMPARTILHADO
+│       ├── services/
+│       │   └── audio_service.dart              # sons (audioplayers) + haptics, escuta o GameEventBus
 │       ├── widgets/
-│       │   ├── playing_card_widget.dart        # carta customizada (frente/verso, flip)
+│       │   ├── playing_card_widget.dart        # carta (frente/verso, flip)
 │       │   └── player_avatar_widget.dart       # avatar com anel de vez / all-in / fold
 │       └── utils/
 │           ├── app_colors.dart
 │           ├── formatters.dart
-│           └── name_masker.dart                # censura dinâmica: "Guilherme" -> "****lherme"
+│           └── name_masker.dart                # censura: "Guilherme" -> "****lherme"
+└── assets/sounds/                              # efeitos WAV (gerados proceduralmente)
 └── test/
     ├── hand_evaluator_test.dart
     ├── deck_service_test.dart
@@ -105,6 +128,21 @@ desacoplado:
 
 Em produção, o **servidor é a fonte da verdade** (embaralha, decide o vencedor);
 o engine local serve para o modo demo/jogo offline e espelha as mesmas regras.
+
+### Modos de jogo (lobby)
+
+- **Vs Bots** — usa `MockSocketService` (sem rede); os 5 adversários são IA.
+- **Online** — usa `SimulatedSocketService` (um "servidor" simulado com
+  latência e presença de jogadores remotos) quando não há URL de servidor;
+  informe um endereço `wss://...` no lobby para usar o `WebSocketSocketService`
+  real contra um backend. Os eventos do servidor (`presence`, `hand_start`,
+  `deal_hole`, `community`, `turn`, `bet_update`, `showdown`) são tratados em
+  `PokerEngineController.applyServerEvent` — é só plugar o backend que publicar
+  esse protocolo JSON.
+
+### Censura de nomes
+- **Bots** (offline): nome censurado (`Guilherme -> ****lherme`).
+- **Online** (jogadores reais): nome verdadeiro + indicador de latência.
 
 ---
 

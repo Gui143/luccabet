@@ -14,6 +14,7 @@ class GameSessionModel {
   GameSessionModel({
     int smallBlind = 10,
     int bigBlind = 20,
+    GameMode mode = GameMode.bots,
   })  : communityCards = <CardModel>[].obs,
         pot = 0.obs,
         phase = BettingRound.waiting.obs,
@@ -25,7 +26,17 @@ class GameSessionModel {
         bigBlind = bigBlind.obs,
         handNumber = 0.obs,
         statusMessage = ''.obs,
+        mode = mode.obs,
+        connection = ConnectionStatus.disconnected.obs,
         winners = <WinnerResult>[].obs;
+
+  /// Modo de jogo: bots (offline/IA) ou online (multiplayer).
+  final Rx<GameMode> mode;
+
+  /// Status da conexão WebSocket (modo online).
+  final Rx<ConnectionStatus> connection;
+
+  bool get isOnline => mode.value == GameMode.online;
 
   /// As 5 cartas comunitárias (flop = 3, turn = +1, river = +1).
   final RxList<CardModel> communityCards;

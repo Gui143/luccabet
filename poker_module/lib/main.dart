@@ -1,12 +1,11 @@
 /// ============================================================================
 ///  main.dart — ponto de entrada do app de demonstração do módulo de poker.
-///  Roda em Web e Desktop. Registra o binding da feature e abre a mesa.
+///  Roda em Web e Desktop. Abre no LOBBY (escolha bots/online).
 /// ============================================================================
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'modules/game_table/bindings/game_table_binding.dart';
-import 'modules/game_table/views/game_table_screen.dart';
+import 'modules/lobby/lobby_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,8 +25,7 @@ class PokerApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Roboto',
       ),
-      initialBinding: GameTableBinding(),
-      home: const GameTableScreen(),
+      home: const LobbyScreen(),
     );
   }
 }

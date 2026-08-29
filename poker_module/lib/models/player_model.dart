@@ -20,17 +20,22 @@ class PlayerModel {
     int seat = 0,
     bool isHero = false,
     bool isBot = false,
+    bool isRemote = false,
+    int latencyMs = 0,
     String? avatarSeed,
   })  : stack = stack.obs,
         seat = seat.obs,
         isHero = isHero,
         isBot = isBot,
+        isRemote = isRemote,
+        latencyMs = latencyMs.obs,
         state = PlayerState.waiting.obs,
         holeCards = <CardModel>[].obs,
         currentBet = 0.obs,
         totalCommitted = 0.obs,
         hasButton = false.obs,
         isTurn = false.obs,
+        connected = true.obs,
         lastAction = Rxn<PlayerActionType>(),
         avatarSeed = avatarSeed ?? id;
 
@@ -41,11 +46,20 @@ class PlayerModel {
   /// `true` para o jogador humano local (a "mão" que vemos aberta).
   final bool isHero;
 
-  /// `true` para oponentes controlados por IA (modo simulado/offline).
+  /// `true` para oponentes controlados por IA (modo bots/offline).
   final bool isBot;
+
+  /// `true` para oponentes controlados por um jogador REMOTO (modo online).
+  final bool isRemote;
 
   /// Seed usada para gerar o avatar (inicial/ícone) de forma determinística.
   final String avatarSeed;
+
+  /// Latência simulada/medida do jogador remoto (modo online), em ms.
+  final RxInt latencyMs;
+
+  /// Se o jogador remoto está conectado (modo online).
+  final RxBool connected;
 
   // ---- Estado reativo (modificado pelo engine) ----
 
@@ -76,8 +90,21 @@ class PlayerModel {
   /// Última ação executada (para exibir o "selo" Fold/Call/Raise...).
   final Rxn<PlayerActionType> lastAction;
 
-  /// Nome censurado para exibir oponentes (o hero vê o próprio nome inteiro).
-  String get displayName => isHero ? name : NameMasker.mask(name);
+  /// Nome censurado para exibir oponentes.
+  /// - hero: nome inteiro.
+  /// - bots (modo offline): nome censurado por privacidade do "cassino".
+  /// - remotos (modo online): nome real (são usuários autenticados).
+  bool get showRealName => isHero || isRemote;
+
+  /// Retorna o nome conforme o modo. [online] indica se a mesa é multiplayer.
+  String nameFor({bool online = false}) {
+    if (isHero) return name;
+    if (isRemote || online) return name; // usuários reais: nome verdadeiro
+    return NameMasker.mask(name); // bots: censurado
+  }
+
+  /// Compatibilidade com a UI antiga (censura bots).
+  String get displayName => showRealName ? name : NameMasker.mask(name);
 
   /// Jogador ainda tem fichas e pode participar de mãos futuras.
   bool get hasChips => stack.value > 0;

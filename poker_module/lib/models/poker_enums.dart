@@ -75,6 +75,20 @@ enum PlayerActionType {
   allIn, // Apostar tudo
 }
 
+/// Modo de jogo da sessão.
+enum GameMode {
+  /// Jogo local contra oponentes controlados por IA (offline).
+  bots,
+
+  /// Multiplayer: contra outros usuários via WebSocket.
+  /// Sem um servidor real, usa o `SimulatedSocketService` (servidor simulado
+  /// que imita jogadores remotos com latência).
+  online,
+}
+
+/// Status da conexão de rede (para o HUD do modo online).
+enum ConnectionStatus { disconnected, connecting, connected, error }
+
 /// Categorias de mão de poker, ordenadas da mais fraca (0) para a mais forte.
 /// O índice é usado diretamente na comparação de desempate.
 enum HandCategory {

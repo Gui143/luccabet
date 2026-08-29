@@ -27,15 +27,28 @@ import '../../models/game_session_model.dart';
 import '../../models/player_model.dart';
 import '../../models/poker_enums.dart';
 import 'services/deck_service.dart';
+import 'services/game_events.dart';
 import 'services/hand_evaluator_service.dart';
 
 class PokerEngineController extends GetxController {
-  PokerEngineController({DeckService? deck, Random? random})
+  PokerEngineController({DeckService? deck, Random? random, GameEventBus? bus})
       : _deck = deck ?? DeckService(random: random),
-        _random = random ?? Random();
+        _random = random ?? Random(),
+        _bus = bus;
 
   final DeckService _deck;
   final Random _random;
+
+  /// Barramento de eventos de domínio (sons e fichas animadas escutam aqui).
+  GameEventBus? _bus;
+  GameEventBus get events {
+    _bus ??= Get.isRegistered<GameEventBus>()
+        ? Get.find<GameEventBus>()
+        : Get.put(GameEventBus(), permanent: true);
+    return _bus!;
+  }
+
+  void _emit(GameEvent e) => events.emit(e);
 
   // ---------------- Estado global reativo ----------------
   /// Sessão da mesa (cartas comunitárias, pote, fase...).
@@ -65,11 +78,16 @@ class PokerEngineController extends GetxController {
   //  CONFIGURAÇÃO DA MESA
   // ============================================================
 
-  /// Cria/senta os jogadores. [heroName] é o humano; os demais são bots.
+  /// Cria/senta os jogadores.
+  ///
+  /// - [mode] == GameMode.bots: os adversários são IA (nomes censurados).
+  /// - [mode] == GameMode.online: os adversários são "remotos" (nomes reais,
+  ///   campo [isRemote] = true), preenchidos a partir do servidor/simulado.
   void setupTable({
     String heroName = 'Você',
     int playerCount = 6,
     int startingStack = 1000,
+    GameMode mode = GameMode.bots,
     List<String> botNames = const [
       'Guilherme',
       'Beatriz',
@@ -77,32 +95,88 @@ class PokerEngineController extends GetxController {
       'Camila',
       'Thiago',
     ],
+    List<PlayerModel> opponents = const [],
   }) {
+    _botTimer?.cancel();
+    _handInProgress = false;
+    results.clear();
     players.clear();
-    final heroP = PlayerModel(
+    session.mode.value = mode;
+    session.connection.value =
+        mode == GameMode.online ? ConnectionStatus.connecting : ConnectionStatus.disconnected;
+    players.add(PlayerModel(
       id: 'p0',
       name: heroName,
       stack: startingStack,
       seat: 0,
       isHero: true,
       isBot: false,
-    );
-    players.add(heroP);
+      isRemote: false,
+    ));
 
-    final seats = playerCount - 1;
-    for (var i = 0; i < seats; i++) {
-      final name = i < botNames.length ? botNames[i] : 'Bot$i';
-      players.add(PlayerModel(
-        id: 'p${i + 1}',
-        name: name,
-        stack: startingStack,
-        seat: i + 1,
-        isHero: false,
-        isBot: true,
-      ));
+    if (opponents.isNotEmpty) {
+      // Modo online: adversários vindos do servidor.
+      for (var i = 0; i < opponents.length; i++) {
+        final src = opponents[i];
+        players.add(PlayerModel(
+          id: src.id,
+          name: src.name,
+          stack: startingStack,
+          seat: i + 1,
+          isHero: false,
+          isBot: false,
+          isRemote: true,
+          latencyMs: src.latencyMs.value,
+        ));
+      }
+    } else {
+      final seats = playerCount - 1;
+      for (var i = 0; i < seats; i++) {
+        final name = i < botNames.length ? botNames[i] : 'Bot$i';
+        players.add(PlayerModel(
+          id: mode == GameMode.online ? 'r$i' : 'p${i + 1}',
+          name: name,
+          stack: startingStack,
+          seat: i + 1,
+          isHero: false,
+          // No modo bots são IA; no online são remotos (simulados) mas ainda
+          // agem sozinhos no demo (substituído pelo servidor no jogo real).
+          isBot: mode == GameMode.bots,
+          isRemote: mode == GameMode.online,
+          latencyMs: mode == GameMode.online ? 40 + (i * 31 % 130) : 0,
+        ));
+      }
     }
     session.dealerSeat.value = 0;
-    session.statusMessage.value = 'Mesa pronta. Clique para dar início.';
+    session.statusMessage.value = mode == GameMode.online
+        ? 'Conectado à sala online. Aguardando jogadores...'
+        : 'Mesa pronta (vs bots). Clique para dar início.';
+  }
+
+  /// Atualiza/adiciona um jogador remoto a partir do evento de presença do
+  /// servidor (modo online).
+  void updateRemotePresence(Map<String, dynamic> p) {
+    final id = p['id']?.toString() ?? '';
+    final name = p['name']?.toString() ?? 'Player';
+    final stack = (p['stack'] as num?)?.toInt() ?? 1000;
+    final ping = (p['ping'] as num?)?.toInt() ?? 0;
+    final existing = players.firstWhereOrNull((pl) => pl.id == id);
+    if (existing != null) {
+      existing.latencyMs.value = ping;
+      existing.connected.value = true;
+    } else {
+      final seat = players.length;
+      players.add(PlayerModel(
+        id: id,
+        name: name,
+        stack: stack,
+        seat: seat,
+        isHero: false,
+        isBot: false,
+        isRemote: true,
+        latencyMs: ping,
+      ));
+    }
   }
 
   // ============================================================
@@ -196,6 +270,13 @@ class PokerEngineController extends GetxController {
     session.pot.value += paid;
     p.lastAction.value = null; // blinds não são "ação" de rua
     if (p.stack.value == 0) p.state.value = PlayerState.allIn;
+    _emit(GameEvent(
+      type: GameEventType.bet,
+      seat: p.seat.value,
+      amount: paid,
+      playerId: p.id,
+      isHero: p.isHero,
+    ));
   }
 
   /// Distribui 2 cartas hole para cada jogador ativo (uma de cada vez, em
@@ -206,7 +287,13 @@ class PokerEngineController extends GetxController {
         final faceUp = p.isHero; // só o hero vê as próprias cartas
         final card = _deck.deal(faceUp: faceUp);
         p.holeCards.add(card);
-        await Future<void>.delayed(const Duration(milliseconds: 120));
+        _emit(GameEvent(
+          type: GameEventType.cardDealt,
+          seat: p.seat.value,
+          playerId: p.id,
+          isHero: p.isHero,
+        ));
+        await Future<void>.delayed(const Duration(milliseconds: 140));
       }
     }
   }
@@ -242,6 +329,12 @@ class PokerEngineController extends GetxController {
       case PlayerActionType.fold:
         p.state.value = PlayerState.folded;
         p.lastAction.value = PlayerActionType.fold;
+        _emit(GameEvent(
+          type: GameEventType.fold,
+          seat: p.seat.value,
+          playerId: p.id,
+          isHero: p.isHero,
+        ));
         break;
 
       case PlayerActionType.check:
@@ -274,12 +367,20 @@ class PokerEngineController extends GetxController {
 
   void _doCall(PlayerModel p, int amount) {
     final pay = min(amount, p.stack.value);
+    if (pay <= 0) return;
     p.stack.value -= pay;
     p.currentBet.value += pay;
     p.totalCommitted.value += pay;
     session.pot.value += pay;
     p.state.value = p.stack.value == 0 ? PlayerState.allIn : PlayerState.called;
     p.lastAction.value = PlayerActionType.call;
+    _emit(GameEvent(
+      type: GameEventType.bet,
+      seat: p.seat.value,
+      amount: pay,
+      playerId: p.id,
+      isHero: p.isHero,
+    ));
   }
 
   /// Aposta/aumenta. [target] é o valor TOTAL que o jogador terá apostado na
@@ -305,6 +406,15 @@ class PokerEngineController extends GetxController {
       p.lastAction.value = PlayerActionType.bet;
     }
     p.state.value = isAllIn ? PlayerState.allIn : PlayerState.raised;
+    if (added > 0) {
+      _emit(GameEvent(
+        type: GameEventType.bet,
+        seat: p.seat.value,
+        amount: added,
+        playerId: p.id,
+        isHero: p.isHero,
+      ));
+    }
   }
 
   void _doAllIn(PlayerModel p) {
@@ -427,6 +537,10 @@ class PokerEngineController extends GetxController {
     // Nova rua: aposta zera e começa pelo primeiro ativo após o dealer.
     session.currentBet.value = 0;
     session.minRaise.value = session.bigBlind.value;
+    _emit(GameEvent(
+      type: GameEventType.phaseChanged,
+      seat: -1,
+    ));
     final active = _activePlayers().where((p) => p.isInHand).toList();
     if (_isBettingRoundComplete(active)) {
       // Todos all-in: segue distribuindo sem apostas.
@@ -515,6 +629,15 @@ class PokerEngineController extends GetxController {
               [...w.holeCards, ...session.communityCards],
             ),
           ));
+          // Fichas voam do pote para o vencedor + som de vitória/derrota.
+          _emit(GameEvent(
+            type: GameEventType.showdown,
+            seat: w.seat.value,
+            amount: amount,
+            playerId: w.id,
+            isHero: w.isHero,
+            isWin: w.isHero,
+          ));
         }
       }
       prevLevel = level;
@@ -538,19 +661,28 @@ class PokerEngineController extends GetxController {
   /// Quando só restou um jogador (todos os outros foldaram), ele leva o pote.
   void _awardWithoutShowdown(PlayerModel winner) {
     session.activeSeat.value = null;
-    winner.stack.value += session.pot.value;
+    final amount = session.pot.value;
+    winner.stack.value += amount;
     results.assignAll([
       WinnerResult(
         playerId: winner.id,
-        amountWon: session.pot.value,
+        amountWon: amount,
         category: HandCategory.highCard,
         handDescription: 'Todos desistiram',
       ),
     ]);
     session.phase.value = BettingRound.showdown;
     session.statusMessage.value =
-        '${winner.displayName} venceu ${session.pot.value} fichas (desistência)';
+        '${winner.displayName} venceu $amount fichas (desistência)';
     session.pot.value = 0;
+    _emit(GameEvent(
+      type: GameEventType.winnerByFold,
+      seat: winner.seat.value,
+      amount: amount,
+      playerId: winner.id,
+      isHero: winner.isHero,
+      isWin: winner.isHero,
+    ));
     _scheduleEndHand();
   }
 
@@ -583,10 +715,24 @@ class PokerEngineController extends GetxController {
     session.activeSeat.value = seat;
 
     final current = players[seat];
-    if (current.isBot && current.isInHand) {
+    _emit(GameEvent(
+      type: GameEventType.turnChanged,
+      seat: seat,
+      playerId: current.id,
+      isHero: current.isHero,
+    ));
+
+    // No demo, adversários (bots e remotos simulados) agem sozinhos.
+    // No jogo online real, a ação do remoto vem do servidor via applyServerEvent.
+    if (_actsAutomatically(current) && current.isInHand) {
       _scheduleBotAction(current);
     }
   }
+
+  /// Define se um jogador deve agir automaticamente no demo.
+  /// Bots sempre; remotos também (o "servidor" simulado local decide), pois
+  /// não há backend real controlando-os neste ambiente.
+  bool _actsAutomatically(PlayerModel p) => p.isBot || p.isRemote;
 
   /// IA simples dos oponentes: age após uma pequena "pensada".
   void _scheduleBotAction(PlayerModel bot) {
@@ -706,10 +852,41 @@ class PokerEngineController extends GetxController {
   void applyServerEvent(Map<String, dynamic> event) {
     final type = event['type'] as String?;
     switch (type) {
-      case 'hand_start':
-        session.handNumber.value = (event['handNumber'] as num?)?.toInt() ?? 0;
-        session.dealerSeat.value = (event['dealerSeat'] as num?)?.toInt() ?? 0;
+      case 'welcome':
+        session.connection.value = ConnectionStatus.connected;
+        session.mode.value = GameMode.online;
         break;
+
+      case 'presence':
+        // Lista de jogadores remotos conectados na sala.
+        session.connection.value = ConnectionStatus.connected;
+        final list = (event['players'] as List?) ?? const [];
+        for (final raw in list) {
+          updateRemotePresence(Map<String, dynamic>.from(raw as Map));
+        }
+        break;
+
+      case 'hand_start':
+        session.mode.value = GameMode.online;
+        session.handNumber.value = (event['handNumber'] as num?)?.toInt() ??
+            session.handNumber.value;
+        session.dealerSeat.value =
+            (event['dealerSeat'] as num?)?.toInt() ?? session.dealerSeat.value;
+        break;
+
+      case 'deal_hole':
+        // Servidor envia as cartas do hero (as dos outros vêm ocultas).
+        final cards = (event['cards'] as List?)
+                ?.map((e) => CardModel.fromJson(Map<String, dynamic>.from(e)))
+                .toList() ??
+            [];
+        hero?.holeCards.assignAll(cards);
+        for (final c in cards) {
+          c.reveal();
+          _emit(GameEvent(type: GameEventType.cardDealt, isHero: true));
+        }
+        break;
+
       case 'community':
         final cards = (event['cards'] as List?)
                 ?.map((e) => CardModel.fromJson(Map<String, dynamic>.from(e)))
@@ -718,15 +895,61 @@ class PokerEngineController extends GetxController {
         session.communityCards.assignAll(cards);
         session.phase.value =
             BettingRoundJson.fromJson(event['phase'] as String? ?? 'flop');
+        _emit(const GameEvent(type: GameEventType.phaseChanged));
         break;
+
       case 'pot_update':
-        session.pot.value = (event['pot'] as num?)?.toInt() ?? session.pot.value;
+        session.pot.value =
+            (event['pot'] as num?)?.toInt() ?? session.pot.value;
         break;
+
+      case 'stack_update':
+        final pid = event['playerId']?.toString();
+        final p = players.firstWhereOrNull((pl) => pl.id == pid);
+        if (p != null) {
+          p.stack.value = (event['stack'] as num?)?.toInt() ?? p.stack.value;
+        }
+        break;
+
       case 'turn':
         _setTurn((event['seat'] as num).toInt());
         break;
-      // Outros eventos (bet_update, showdown, stack_update...) seriam
-      // tratados aqui, espelhando os métodos locais.
+
+      case 'bet_update':
+        // Aposta de um jogador remoto (servidor é a fonte da verdade online).
+        final seat = (event['seat'] as num?)?.toInt();
+        final p = seat != null
+            ? players.firstWhereOrNull((pl) => pl.seat.value == seat)
+            : null;
+        if (p != null) {
+          final pot = (event['pot'] as num?)?.toInt();
+          if (pot != null) session.pot.value = pot;
+          _emit(GameEvent(
+            type: GameEventType.bet,
+            seat: p.seat.value,
+            amount: (event['amount'] as num?)?.toInt() ?? 0,
+            playerId: p.id,
+          ));
+        }
+        break;
+
+      case 'showdown':
+        // Servidor declara os vencedores; a UI exibe e o som toca.
+        session.phase.value = BettingRound.showdown;
+        final winners = (event['winners'] as List?) ?? const [];
+        for (final w in winners) {
+          final map = Map<String, dynamic>.from(w as Map);
+          _emit(GameEvent(
+            type: GameEventType.showdown,
+            seat: (map['seat'] as num?)?.toInt() ?? -1,
+            amount: (map['amountWon'] as num?)?.toInt() ?? 0,
+            playerId: map['playerId']?.toString(),
+            isWin: map['playerId']?.toString() == hero?.id,
+            isHero: map['playerId']?.toString() == hero?.id,
+          ));
+        }
+        break;
+
       default:
         break;
     }

@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../game_table_controller.dart';
 import '../../../models/player_model.dart';
 import '../../../models/poker_enums.dart';
 import '../../../shared/utils/app_colors.dart';
@@ -18,6 +19,15 @@ class PlayerSeatWidget extends StatelessWidget {
 
   final PlayerModel player;
   final bool compact;
+
+  /// Nome a exibir: usa o GameTableController (bots censurado, online real).
+  String get _name {
+    if (player.isHero) return player.name;
+    if (Get.isRegistered<GameTableController>()) {
+      return Get.find<GameTableController>().displayNameFor(player);
+    }
+    return player.displayName;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +85,7 @@ class PlayerSeatWidget extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          player.displayName,
+                          _name,
                           style: const TextStyle(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.bold,
@@ -92,6 +102,17 @@ class PlayerSeatWidget extends StatelessWidget {
                             ),
                             child: const Text('VOCÊ',
                                 style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold)),
+                          )
+                        else if (player.isRemote)
+                          Container(
+                            margin: const EdgeInsets.only(left: 5),
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: AppColors.call,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text('${player.latencyMs.value}ms',
+                                style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold)),
                           ),
                       ],
                     ),

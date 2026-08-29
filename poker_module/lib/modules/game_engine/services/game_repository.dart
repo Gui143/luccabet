@@ -42,7 +42,11 @@ class GameRepository {
 
   Future<void> connect({String? url, String? token}) async {
     _socket.onMessage(_handleMessage);
-    await _socket.connect(url: url, authToken: token);
+    // Idempotente: não reconecta um socket já aberto (o lobby pode tê-lo
+    // conectado antes de navegar para a mesa).
+    if (!_socket.isConnected) {
+      await _socket.connect(url: url, authToken: token);
+    }
   }
 
   /// Ponto único de processamento de mensagens recebidas.

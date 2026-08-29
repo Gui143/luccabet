@@ -1,7 +1,7 @@
 /// ============================================================================
 ///  action_bar_widget.dart
 ///  Barra de ações do jogador (Fold / Check / Call / Raise / All-in).
-///  Só fica ativa quando é a vez do hero. Reage ao estado do engine via GetX.
+///  Integra o [RaiseSliderWidget] (gesto arrastável) e os sons/háptica.
 /// ============================================================================
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,7 +9,9 @@ import 'package:get/get.dart';
 import '../../../models/poker_enums.dart';
 import '../../../shared/utils/app_colors.dart';
 import '../../../shared/utils/formatters.dart';
+import '../../game_engine/services/game_events.dart';
 import '../../game_engine/poker_engine_controller.dart';
+import 'raise_slider_widget.dart';
 
 class ActionBarWidget extends StatefulWidget {
   const ActionBarWidget({super.key});
@@ -21,8 +23,7 @@ class ActionBarWidget extends StatefulWidget {
 class _ActionBarWidgetState extends State<ActionBarWidget> {
   final PokerEngineController engine = Get.find<PokerEngineController>();
 
-  /// Multiplicador do raise sobre o big blind (1x, 2x, 3x...).
-  double _raiseMultiplier = 2;
+  int _raiseTarget = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -35,51 +36,34 @@ class _ActionBarWidgetState extends State<ActionBarWidget> {
       final canCheck = callAmount == 0;
       final bb = engine.session.bigBlind.value;
       final stack = hero.stack.value;
+      final curBet = engine.session.currentBet.value;
 
-      // Valor do raise = aposta atual + (bb * multiplicador), limitado ao stack.
-      final raiseTarget = (engine.session.currentBet.value + (bb * _raiseMultiplier).round())
-          .clamp(engine.session.currentBet.value + bb, hero.currentBet.value + stack);
+      // Limites do raise.
+      final minRaise = curBet + bb; // pelo menos +1 BB
+      final maxRaise = hero.currentBet.value + stack; // all-in
+      final effectiveMin = minRaise.clamp(0, maxRaise);
+      if (_raiseTarget < effectiveMin || _raiseTarget > maxRaise) {
+        _raiseTarget = (curBet + bb * 2).clamp(effectiveMin, maxRaise);
+      }
+
+      final allIn = stack <= callAmount;
 
       return AnimatedOpacity(
-        opacity: isTurn ? 1 : 0.35,
+        opacity: isTurn ? 1 : 0.30,
         duration: const Duration(milliseconds: 200),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Slider de raise (habilitado na vez do hero).
-            if (isTurn)
+            if (isTurn && !allIn)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Raise', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
-                    SizedBox(
-                      width: 180,
-                      child: SliderTheme(
-                        data: SliderThemeData(
-                          activeTrackColor: AppColors.raiseColor,
-                          thumbColor: AppColors.gold,
-                          overlayColor: AppColors.gold.withValues(alpha: 0.2),
-                          trackHeight: 3,
-                        ),
-                        child: Slider(
-                          min: 1,
-                          max: 8,
-                          divisions: 7,
-                          value: _raiseMultiplier.clamp(1, 8),
-                          label: '${Formatters.chips(raiseTarget)}',
-                          onChanged: isTurn
-                              ? (v) => setState(() => _raiseMultiplier = v)
-                              : null,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      Formatters.chips(raiseTarget),
-                      style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                child: RaiseSliderWidget(
+                  value: _raiseTarget,
+                  min: effectiveMin,
+                  max: maxRaise,
+                  pot: engine.session.pot.value,
+                  bigBlind: bb,
+                  onChanged: (v) => setState(() => _raiseTarget = v),
                 ),
               ),
             Row(
@@ -106,15 +90,17 @@ class _ActionBarWidgetState extends State<ActionBarWidget> {
                 ),
                 const SizedBox(width: 10),
                 _ActionButton(
-                  label: stack <= callAmount ? 'All-in' : 'Raise ${Formatters.chips(raiseTarget)}',
+                  label: allIn
+                      ? 'All-in ${Formatters.chips(stack)}'
+                      : 'Raise ${Formatters.chips(_raiseTarget)}',
                   color: AppColors.raiseColor,
-                  icon: Icons.trending_up,
+                  icon: allIn ? Icons.bolt : Icons.trending_up,
                   enabled: isTurn,
                   onTap: () => engine.playerAction(
-                    stack <= callAmount
+                    allIn
                         ? PlayerActionType.allIn
                         : PlayerActionType.raiseAction,
-                    raiseTo: raiseTarget,
+                    raiseTo: _raiseTarget,
                   ),
                 ),
               ],
@@ -144,12 +130,21 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
-      onPressed: enabled ? onTap : null,
+      onPressed: enabled
+          ? () {
+              // Som/háptica de toque.
+              if (Get.isRegistered<GameEventBus>()) {
+                Get.find<GameEventBus>()
+                    .emit(const GameEvent(type: GameEventType.uiTap));
+              }
+              onTap();
+            }
+          : null,
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.white,
-        disabledBackgroundColor: color.withValues(alpha: 0.4),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        disabledBackgroundColor: color.withValues(alpha: 0.35),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
       ),

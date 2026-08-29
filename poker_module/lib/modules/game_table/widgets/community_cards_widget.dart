@@ -1,15 +1,14 @@
 /// ============================================================================
 ///  community_cards_widget.dart
 ///  A "board": as 5 cartas comunitárias ao centro da mesa (3 flop + turn + river)
-///  e o pote. Mostra placeholders até as cartas serem distribuídas.
+///  e o pote animado. Mostra placeholders até as cartas serem distribuídas.
 /// ============================================================================
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../models/game_session_model.dart';
-import '../../../shared/utils/app_colors.dart';
-import '../../../shared/utils/formatters.dart';
 import '../../../shared/widgets/playing_card_widget.dart';
+import 'flying_chips_overlay.dart';
 
 class CommunityCardsWidget extends StatelessWidget {
   const CommunityCardsWidget({super.key, required this.session});
@@ -23,30 +22,8 @@ class CommunityCardsWidget extends StatelessWidget {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Pote.
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('💰', style: TextStyle(fontSize: 16)),
-                const SizedBox(width: 6),
-                Text(
-                  'Pote: ${Formatters.chips(session.pot.value)}',
-                  style: const TextStyle(
-                    color: AppColors.gold,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Pote animado (contagem + pulse).
+          AnimatedPot(pot: session.pot.value),
           const SizedBox(height: 10),
           // As 5 posições de cartas comunitárias.
           Row(
@@ -55,11 +32,7 @@ class CommunityCardsWidget extends StatelessWidget {
               final card = i < cards.length ? cards[i] : null;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: PlayingCardWidget(
-                  card: card,
-                  width: 48,
-                  height: 68,
-                ),
+                child: PlayingCardWidget(card: card, width: 48, height: 68),
               );
             }),
           ),
