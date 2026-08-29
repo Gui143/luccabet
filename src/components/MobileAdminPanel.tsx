@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Shield, Plus, Trash2, Users, DollarSign, CheckCircle, Calendar, Settings, Gift, ToggleLeft, ToggleRight, UserCircle, Search, Headphones } from 'lucide-react';
+import { Trophy, Shield, Plus, Trash2, Users, DollarSign, CheckCircle, Calendar, Settings, Gift, ToggleLeft, ToggleRight, UserCircle, Search, Headphones, Palette } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import UsersListWithBalance from '@/components/admin/UsersListWithBalance';
 import SupportDashboard from '@/components/admin/SupportDashboard';
 import TransactionsAdmin from '@/components/admin/TransactionsAdmin';
 import GameOddsTab from '@/components/admin/GameOddsTab';
+import ThemesAdminTab from '@/components/admin/ThemesAdminTab';
 
 interface CBFDGame {
   id: string;
@@ -508,6 +509,9 @@ const MobileAdminPanel: React.FC = () => {
           <TabsTrigger value="percentuais" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
             % Ganho
           </TabsTrigger>
+          <TabsTrigger value="temas" className="text-[10px] sm:text-xs py-2 px-1 flex-1 min-w-[60px]">
+            🎰 Temas
+          </TabsTrigger>
         </TabsList>
 
         {/* DASHBOARD */}
@@ -518,6 +522,11 @@ const MobileAdminPanel: React.FC = () => {
         {/* PERCENTUAIS DE GANHO/PERDA */}
         <TabsContent value="percentuais" className="mt-4">
           <GameOddsTab />
+        </TabsContent>
+
+        {/* TEMAS DE CAÇA-NÍQUEIS DO APP */}
+        <TabsContent value="temas" className="mt-4">
+          <ThemesAdminTab />
         </TabsContent>
 
 

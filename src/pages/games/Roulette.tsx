@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { shouldPlayerWin } from '@/lib/gameOdds';
+import { recordGameOutcome } from '@/lib/gameOutcomes';
 
 type BetType = 'red' | 'black' | 'even' | 'odd' | 'number';
 
@@ -108,8 +109,9 @@ const Roulette: React.FC = () => {
         result: 'win',
         profit: winAmount - amount,
       });
+      recordGameOutcome({ userId: user?.id, gameName: 'Roleta', betAmount: amount, multiplier, winAmount });
 
-      toast.success(`🎯 Win! Number ${result}. You won $${winAmount.toFixed(2)}`);
+      toast.success(`🎯 Saiu ${result}! Você ganhou R$${winAmount.toFixed(2)}`);
     } else {
       addBet({
         game: 'Roulette',
@@ -118,8 +120,9 @@ const Roulette: React.FC = () => {
         result: 'loss',
         profit: -amount,
       });
-      
-      toast.error(`Number ${result}. Better luck next time!`);
+      recordGameOutcome({ userId: user?.id, gameName: 'Roleta', betAmount: amount, multiplier: 0, winAmount: 0 });
+
+      toast.error(`Saiu ${result}. Tente de novo!`);
     }
   };
 

@@ -7,6 +7,7 @@ import { formatBRLShort } from '@/lib/formatCurrency';
 import MobileAdminPanel from '@/components/MobileAdminPanel';
 import SoundToggle from '@/components/SoundToggle';
 import SupportChat from '@/components/SupportChat';
+import ThemeBackground from '@/components/ThemeBackground';
 
 import brazucaLogo from '@/assets/brazucabet-logo.png';
 
@@ -32,7 +33,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (showAdmin && isAdminEmail) {
     return (
-      <div className="min-h-screen bg-background w-full overflow-x-hidden">
+      <div className="min-h-screen w-full overflow-x-hidden">
+        <ThemeBackground />
         <header className="border-b border-border bg-card/90 backdrop-blur-md sticky top-0 z-50">
           <div className="w-full max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between gap-2">
@@ -54,7 +56,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen bg-background w-full overflow-x-hidden pb-16 md:pb-0">
+    <div className="min-h-screen w-full overflow-x-hidden pb-16 md:pb-0">
+      <ThemeBackground />
       {/* Top Header */}
       <header className="border-b border-border bg-card/95 backdrop-blur-xl sticky top-0 z-50">
         <div className="w-full max-w-7xl mx-auto px-3 sm:px-4">

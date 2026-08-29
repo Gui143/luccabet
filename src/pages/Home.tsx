@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Link } from 'react-router-dom';
-import { Gamepad2, Play, ChevronRight, Flame } from 'lucide-react';
+import { Gamepad2, Play, ChevronRight, Flame, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/Layout';
 import BettingMarkets from '@/components/betting/BettingMarkets';
 import CasinoCarousel from '@/components/CasinoCarousel';
 import DailySpin from '@/components/DailySpin';
 import Leaderboard from '@/components/Leaderboard';
+
+const Slot3DSection = lazy(() => import('@/components/Slot3DSection'));
 
 import gatesImg from '@/assets/games/gates-of-olympus.jpg';
 import sweetBonanzaImg from '@/assets/games/sweet-bonanza.jpg';
@@ -33,6 +35,18 @@ const Home: React.FC = () => {
     <Layout>
       <div className="space-y-6">
         <CasinoCarousel />
+
+        {/* Sessão interativa 3D de caça-níqueis (React Three Fiber) */}
+        <Suspense
+          fallback={
+            <div className="rounded-2xl border border-border bg-card h-[340px] flex items-center justify-center text-muted-foreground gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" /> Carregando experiência 3D...
+            </div>
+          }
+        >
+          <Slot3DSection />
+        </Suspense>
+
         <BettingMarkets />
 
         <section>

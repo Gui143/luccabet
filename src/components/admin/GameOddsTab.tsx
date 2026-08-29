@@ -16,6 +16,18 @@ interface Setting {
   is_active: boolean;
 }
 
+// Garante que TODOS os jogos apareçam no painel, mesmo antes de rodar a migration
+const EXPECTED_GAMES: { game_key: string; display_name: string; win_chance: number }[] = [
+  { game_key: 'aviator', display_name: 'Aviator', win_chance: 45 },
+  { game_key: 'sweet_bonanza', display_name: 'Sweet Bonanza', win_chance: 40 },
+  { game_key: 'gates_olympus', display_name: 'Gates of Olympus', win_chance: 40 },
+  { game_key: 'slots', display_name: 'Slots', win_chance: 40 },
+  { game_key: 'mines', display_name: 'Mines', win_chance: 45 },
+  { game_key: 'roulette', display_name: 'Roleta', win_chance: 45 },
+  { game_key: 'blackjack', display_name: 'Blackjack', win_chance: 45 },
+  { game_key: 'baccarat', display_name: 'Baccarat', win_chance: 45 },
+];
+
 const GameOddsTab: React.FC = () => {
   const [settings, setSettings] = useState<Setting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +46,22 @@ const GameOddsTab: React.FC = () => {
     if (error) {
       toast.error('Erro ao carregar percentuais');
     } else {
-      setSettings(((data || []) as any[]).map(d => ({ ...d, win_chance: Number(d.win_chance) })));
+      const rows = ((data || []) as any[]).map(d => ({ ...d, win_chance: Number(d.win_chance) }));
+
+      // Complementa jogos que ainda não existem na tabela (só no frontend)
+      const existing = new Set(rows.map(r => r.game_key));
+      for (const g of EXPECTED_GAMES) {
+        if (!existing.has(g.game_key)) {
+          rows.push({
+            id: `virtual-${g.game_key}`,
+            game_key: g.game_key,
+            display_name: g.display_name,
+            win_chance: g.win_chance,
+            is_active: true,
+          });
+        }
+      }
+      setSettings(rows);
     }
     setLoading(false);
   };
@@ -45,6 +72,27 @@ const GameOddsTab: React.FC = () => {
 
   const save = async (s: Setting) => {
     setSavingId(s.id);
+
+    // Linha virtual (jogo ainda não existe na tabela) → insere
+    if (s.id.startsWith('virtual-')) {
+      const { error } = await supabase
+        .from('game_odds_settings')
+        .insert({
+          game_key: s.game_key,
+          display_name: s.display_name,
+          win_chance: s.win_chance,
+          is_active: s.is_active,
+        });
+      setSavingId(null);
+      if (error) {
+        toast.error('Erro ao salvar: ' + error.message);
+      } else {
+        toast.success(`${s.display_name}: ${s.win_chance}% de ganho`);
+        load();
+      }
+      return;
+    }
+
     const { error } = await supabase
       .from('game_odds_settings')
       .update({ win_chance: s.win_chance, is_active: s.is_active })

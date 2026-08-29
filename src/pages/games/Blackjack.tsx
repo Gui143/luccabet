@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Spade } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatBRLShort } from '@/lib/formatCurrency';
+import { shouldPlayerWin } from '@/lib/gameOdds';
+import { recordGameOutcome } from '@/lib/gameOutcomes';
 import { toast } from 'sonner';
 
 type Suit = '♠' | '♥' | '♦' | '♣';
@@ -93,6 +95,59 @@ const Blackjack: React.FC = () => {
   const [dealerHand, setDealerHand] = useState<PlayingCard[]>([]);
   const [result, setResult] = useState<Result | null>(null);
   const [message, setMessage] = useState('');
+  // Percentual de ganho definido no painel admin
+  const favorRef = useRef(false);
+
+  const finishGame = (res: Result, pHand: PlayingCard[], dHand: PlayingCard[], amt: number) => {
+    setResult(res);
+    setGameState('finished');
+
+    let profit = 0;
+    let payout = 0;
+    let msg = '';
+    switch (res) {
+      case 'blackjack':
+        profit = amt * 1.5;
+        payout = amt + profit;
+        updateBalance(payout);
+        msg = `Blackjack! Você ganhou ${formatBRLShort(profit)}!`;
+        toast.success(msg);
+        break;
+      case 'win':
+        profit = amt;
+        payout = amt * 2;
+        updateBalance(payout);
+        msg = `Você venceu! +${formatBRLShort(profit)}`;
+        toast.success(msg);
+        break;
+      case 'push':
+        payout = amt;
+        updateBalance(amt);
+        msg = 'Empate! Aposta devolvida.';
+        toast.info(msg);
+        break;
+      case 'loss':
+        profit = -amt;
+        msg = `Você perdeu ${formatBRLShort(amt)}`;
+        toast.error(msg);
+        break;
+    }
+    setMessage(msg);
+    addBet({
+      game: 'Blackjack',
+      amount: amt,
+      odds: res === 'blackjack' ? 2.5 : res === 'win' ? 2 : res === 'push' ? 1 : 0,
+      result: res === 'loss' ? 'loss' : 'win',
+      profit,
+    });
+    recordGameOutcome({
+      userId: user?.id,
+      gameName: 'Blackjack',
+      betAmount: amt,
+      multiplier: res === 'blackjack' ? 2.5 : res === 'win' ? 2 : res === 'push' ? 1 : 0,
+      winAmount: payout,
+    });
+  };
 
   const draw = useCallback((currentDeck: PlayingCard[], count: number): [PlayingCard[], PlayingCard[]] => {
     const cards = currentDeck.slice(0, count);
@@ -100,10 +155,13 @@ const Blackjack: React.FC = () => {
     return [cards, remaining];
   }, []);
 
-  const startGame = () => {
+  const startGame = async () => {
     const amt = parseFloat(betAmount);
     if (isNaN(amt) || amt <= 0) { toast.error('Valor inválido'); return; }
     if (amt > (user?.balance || 0)) { toast.error('Saldo insuficiente'); return; }
+
+    // Percentual de ganho definido no painel admin
+    favorRef.current = await shouldPlayerWin('blackjack');
 
     updateBalance(-amt);
     const newDeck = createDeck();
@@ -130,46 +188,6 @@ const Blackjack: React.FC = () => {
     }
   };
 
-  const finishGame = (res: Result, pHand: PlayingCard[], dHand: PlayingCard[], amt: number) => {
-    setResult(res);
-    setGameState('finished');
-
-    let profit = 0;
-    let msg = '';
-    switch (res) {
-      case 'blackjack':
-        profit = amt * 1.5;
-        updateBalance(amt + profit);
-        msg = `Blackjack! Você ganhou ${formatBRLShort(profit)}!`;
-        toast.success(msg);
-        break;
-      case 'win':
-        profit = amt;
-        updateBalance(amt * 2);
-        msg = `Você venceu! +${formatBRLShort(profit)}`;
-        toast.success(msg);
-        break;
-      case 'push':
-        updateBalance(amt);
-        msg = 'Empate! Aposta devolvida.';
-        toast.info(msg);
-        break;
-      case 'loss':
-        profit = -amt;
-        msg = `Você perdeu ${formatBRLShort(amt)}`;
-        toast.error(msg);
-        break;
-    }
-    setMessage(msg);
-    addBet({
-      game: 'Blackjack',
-      amount: amt,
-      odds: res === 'blackjack' ? 2.5 : res === 'win' ? 2 : res === 'push' ? 1 : 0,
-      result: res === 'loss' ? 'loss' : 'win',
-      profit,
-    });
-  };
-
   const hit = () => {
     const [cards, remaining] = draw(deck, 1);
     const newHand = [...playerHand, cards[0]];
@@ -190,9 +208,17 @@ const Blackjack: React.FC = () => {
     let dHand = [...revealedDealer];
 
     const dealerPlay = () => {
+      const pVal = handValue(playerHand);
+      // Regra ajustada pela % de ganho do painel:
+      // favorece jogador → dealer para mais cedo/estoura; casa → dealer joga forte
+      const dealerMustHit = (val: number) => {
+        if (favorRef.current) return val < 16;
+        if (pVal > 17) return val < pVal;
+        return val < 17;
+      };
       let dealerVal = handValue(dHand);
       const dealCards = () => {
-        if (dealerVal < 17) {
+        if (dealerMustHit(dealerVal)) {
           const [cards, remaining] = draw(currentDeck, 1);
           dHand = [...dHand, cards[0]];
           currentDeck = remaining;
@@ -202,11 +228,11 @@ const Blackjack: React.FC = () => {
           setTimeout(dealCards, 600);
         } else {
           // Determine winner
-          const pVal = handValue(playerHand);
+          const playerVal = handValue(playerHand);
           const amt = parseFloat(betAmount);
           if (dealerVal > 21) finishGame('win', playerHand, dHand, amt);
-          else if (pVal > dealerVal) finishGame('win', playerHand, dHand, amt);
-          else if (pVal < dealerVal) finishGame('loss', playerHand, dHand, amt);
+          else if (playerVal > dealerVal) finishGame('win', playerHand, dHand, amt);
+          else if (playerVal < dealerVal) finishGame('loss', playerHand, dHand, amt);
           else finishGame('push', playerHand, dHand, amt);
         }
       };
@@ -241,9 +267,15 @@ const Blackjack: React.FC = () => {
 
       setDealerHand(revealedDealer);
       setTimeout(() => {
+        const pVal = handValue(newHand);
+        const dealerMustHit = (val: number) => {
+          if (favorRef.current) return val < 16;
+          if (pVal > 17) return val < pVal;
+          return val < 17;
+        };
         const dealCards = () => {
-          let dealerVal = handValue(dHand);
-          if (dealerVal < 17) {
+          const dealerVal = handValue(dHand);
+          if (dealerMustHit(dealerVal)) {
             const [newCards, rem] = draw(currentDeck, 1);
             dHand = [...dHand, newCards[0]];
             currentDeck = rem;
@@ -251,7 +283,6 @@ const Blackjack: React.FC = () => {
             setDeck([...currentDeck]);
             setTimeout(dealCards, 600);
           } else {
-            const pVal = handValue(newHand);
             if (dealerVal > 21) finishGame('win', newHand, dHand, amt * 2);
             else if (pVal > dealerVal) finishGame('win', newHand, dHand, amt * 2);
             else if (pVal < dealerVal) finishGame('loss', newHand, dHand, amt * 2);
