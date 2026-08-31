@@ -8,6 +8,13 @@
       "when": 1787984188312,
       "tag": "0000_create_app_themes_and_seed_odds",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788176687987,
+      "tag": "0001_poker_multiplayer",
+      "breakpoints": true
     }
   ]
 }
