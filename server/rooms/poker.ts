@@ -158,7 +158,13 @@ export class PokerRoom {
     this.broadcastState();
   }
 
+  /** Processa a mesa agora (usado pelo tick periódico do cliente). */
+  tickNow() {
+    this.loop();
+  }
+
   /** Força o início de uma nova mão (só quando a mesa está livre/encerrada). */
+
   startNow(client?: PokerClient) {
     if (this.state.phase !== 'idle' && this.state.phase !== 'finished') {
       client?.send({ t: 'poker:error', message: 'Ainda há uma mão em andamento' });
