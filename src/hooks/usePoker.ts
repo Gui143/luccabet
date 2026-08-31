@@ -125,7 +125,16 @@ export function usePoker(initialTableId: string = DEFAULT_TABLE_ID) {
     client?.poker.start(tableId);
   }, [client, tableId]);
 
+  // mantém a mesa andando: no Lovable Cloud nada roda sozinho, então o cliente
+  // chama `tick` periodicamente (é idempotente — custo zero quando não há nada a fazer)
+  useEffect(() => {
+    if (!client) return;
+    const id = setInterval(() => client.poker.tick(tableId), 2000);
+    return () => clearInterval(id);
+  }, [client, tableId]);
+
   const refreshTables = useCallback(async () => {
+
     if (!client) return;
     try {
       const list = await client.tables();
