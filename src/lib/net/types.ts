@@ -72,7 +72,10 @@ export interface GameClient {
     action(tableId: string, action: 'fold' | 'check' | 'call' | 'raise' | 'allin', amount?: number): void;
     setBots(tableId: string, enabled: boolean): void;
     start(tableId: string): void;
+    /** avança a mesa (timeouts, bots e próxima mão) — chamado a cada ~2s */
+    tick(tableId: string): void;
     sync(tableId: string): void;
+
   };
 
   aviator: {
