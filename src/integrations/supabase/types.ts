@@ -47,25 +47,79 @@ export type Database = {
         }
         Relationships: []
       }
+      aviator_bets: {
+        Row: {
+          amount: number
+          auto_cashout: number | null
+          cashed_out_at: number | null
+          created_at: string
+          id: string
+          round_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          auto_cashout?: number | null
+          cashed_out_at?: number | null
+          created_at?: string
+          id?: string
+          round_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          auto_cashout?: number | null
+          cashed_out_at?: number | null
+          created_at?: string
+          id?: string
+          round_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aviator_bets_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "aviator_rounds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aviator_bets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aviator_rounds: {
         Row: {
           crash_point: number
           created_at: string
+          ends_at: string | null
           id: string
+          server_hash: string | null
+          server_seed: string | null
           started_at: string | null
           status: string
         }
         Insert: {
           crash_point: number
           created_at?: string
+          ends_at?: string | null
           id?: string
+          server_hash?: string | null
+          server_seed?: string | null
           started_at?: string | null
           status?: string
         }
         Update: {
           crash_point?: number
           created_at?: string
+          ends_at?: string | null
           id?: string
+          server_hash?: string | null
+          server_seed?: string | null
           started_at?: string | null
           status?: string
         }

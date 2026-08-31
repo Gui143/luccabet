@@ -15,6 +15,13 @@
       "when": 1788176687987,
       "tag": "0001_poker_multiplayer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788176703363,
+      "tag": "0002_aviator_real_players",
+      "breakpoints": true
     }
   ]
 }
