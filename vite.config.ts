@@ -9,6 +9,11 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     allowedHosts: true,
+    // Servidor de jogos local (server/index.ts): poker e aviator autoritativos
+    proxy: {
+      "/api": { target: "http://127.0.0.1:8787", changeOrigin: true },
+      "/ws": { target: "ws://127.0.0.1:8787", ws: true },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

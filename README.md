@@ -50,6 +50,26 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
+## Jogos (Poker Texas Hold'em e Aviator)
+
+O Poker foi reescrito com um motor determinístico que **não trava mais no
+pré-flop** (`src/games/poker/engine.ts`), cartas reais em sprite atlas
+(`public/cards/`), blinds R$ 2/R$ 5 com buy-in de R$ 500, side pots e showdown
+corretos. O Aviator **não tem mais bots**: só aparecem apostas de jogadores reais
+conectados por WebSocket.
+
+Rodando tudo (site + servidor de jogos autoritativo):
+
+```sh
+npm install
+npm run dev:all
+```
+
+Testes: `npm run test:poker` e `npx tsx server/smoke.ts`.
+
+Detalhes da arquitetura, do protocolo WebSocket e de como aplicar as migrations
+no Lovable Cloud: **[docs/POKER_E_AVIATOR.md](docs/POKER_E_AVIATOR.md)**.
+
 ## What technologies are used for this project?
 
 This project is built with:

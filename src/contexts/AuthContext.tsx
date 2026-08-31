@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { healthCheck, createOrRestoreSession, clearStoredToken, setStoredName } from '@/lib/net/localClient';
+import { withTimeout } from '@/lib/net';
 
 interface User {
   id: string;
@@ -20,8 +22,16 @@ interface Bet {
   timestamp: number;
 }
 
+export type AuthMode = 'supabase' | 'local' | 'offline' | 'loading';
+
 interface AuthContextType {
   user: User | null;
+  /** 'supabase' = Lovable Cloud, 'local' = servidor do repo, 'offline' = sem rede */
+  authMode: AuthMode;
+  /** modo local/demo: troca o apelido do convidado */
+  renameGuest: (name: string) => Promise<void>;
+  /** atualiza o saldo na tela (usado pelos eventos de wallet do servidor) */
+  syncBalance: (balance: number) => void;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, username: string) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -36,14 +46,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isCEO, setIsCEO] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>('loading');
 
   useEffect(() => {
-    // Check active session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        loadUserProfile(session.user.id);
-      }
-    });
+    // Check active session on mount — com timeout: se o Lovable Cloud não
+    // responder (preview sem rede), caímos para a sessão local em 4s.
+    withTimeout(supabase.auth.getSession(), 4000, null as never)
+      .then(({ data: { session } }: any) => {
+        if (session?.user) {
+          setAuthMode('supabase');
+          loadUserProfile(session.user.id);
+        } else {
+          // Sem sessão no Lovable Cloud: cai para o servidor de jogos local
+          // (server/index.ts) para o preview/desenvolvimento continuar jogável.
+          void bootstrapLocalSession();
+        }
+      })
+      .catch(() => {
+        void bootstrapLocalSession();
+      });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -106,6 +127,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       supabase.removeChannel(channel);
     };
   }, [user?.id]);
+
+  /** Cria/restaura a sessão de convidado no servidor local (modo demonstração). */
+  const bootstrapLocalSession = async () => {
+    try {
+      const health = await healthCheck();
+      if (!health?.ok) {
+        setAuthMode('offline');
+        return;
+      }
+      const session = await createOrRestoreSession();
+      setAuthMode('local');
+      setUser({
+        id: session.playerId,
+        email: 'convidado@luccabet.local',
+        username: session.name,
+        balance: session.balance,
+      });
+    } catch {
+      setAuthMode('offline');
+    }
+  };
+
+  const renameGuest = async (name: string) => {
+    const clean = name.trim().slice(0, 18);
+    if (!clean) return;
+    setStoredName(clean);
+    setUser((prev) => (prev ? { ...prev, username: clean } : prev));
+    if (authMode === 'local') {
+      try {
+        await createOrRestoreSession(clean);
+      } catch {
+        /* melhor esforço */
+      }
+    }
+  };
+
+  const syncBalance = (balance: number) => {
+    setUser((prev) => (prev ? { ...prev, balance } : prev));
+  };
 
   const loadUserProfile = async (userId: string) => {
     const { data: profile } = await supabase
@@ -203,14 +263,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', user.id);
     }
 
-    await supabase.auth.signOut();
+    if (authMode === 'supabase') await supabase.auth.signOut();
+    else clearStoredToken();
     setUser(null);
     setIsCEO(false);
+    setAuthMode('loading');
     toast.success('Logged out successfully');
   };
 
   const updateBalance = async (amount: number) => {
     if (!user) return;
+
+    // No modo local o saldo dos jogos é controlado pelo servidor de jogos;
+    // aqui só refletimos na tela (o servidor emite eventos `wallet`).
+    if (authMode !== 'supabase') {
+      const newLocalBalance = Math.max(0, Math.round((user.balance + amount) * 100) / 100);
+      setUser({ ...user, balance: newLocalBalance });
+      return;
+    }
 
     const newBalance = user.balance + amount;
     
@@ -248,6 +318,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{ 
       user, 
+      authMode,
+      renameGuest,
+      syncBalance,
       login, 
       signup, 
       logout, 
