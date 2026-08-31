@@ -247,7 +247,13 @@ wss.on('connection', (socket) => {
         room?.action(clientFor(session), msg.action, Number(msg.amount ?? 0));
         break;
       }
+      case 'poker:tick': {
+        const room = pokerRooms.get(String(msg.tableId ?? TABLES[0].tableId));
+        room?.tickNow();
+        break;
+      }
       case 'poker:start': {
+
         const room = pokerRooms.get(String(msg.tableId ?? TABLES[0].tableId));
         room?.startNow(clientFor(session));
         break;
