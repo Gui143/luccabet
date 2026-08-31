@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# dados do servidor local (carteiras de demonstração)
+server/.data/

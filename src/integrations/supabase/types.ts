@@ -47,6 +47,144 @@ export type Database = {
         }
         Relationships: []
       }
+      aviator_bets: {
+        Row: {
+          amount: number
+          auto_cashout: number | null
+          cashed_out_at: number | null
+          created_at: string
+          id: string
+          round_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          auto_cashout?: number | null
+          cashed_out_at?: number | null
+          created_at?: string
+          id?: string
+          round_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          auto_cashout?: number | null
+          cashed_out_at?: number | null
+          created_at?: string
+          id?: string
+          round_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      poker_hole_cards: {
+        Row: {
+          cards: Json
+          seat: number
+          table_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cards?: Json
+          seat: number
+          table_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cards?: Json
+          seat?: number
+          table_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      poker_players: {
+        Row: {
+          chips: number
+          seat: number
+          status: string
+          table_id: string
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          chips?: number
+          seat: number
+          status?: string
+          table_id: string
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          chips?: number
+          seat?: number
+          status?: string
+          table_id?: string
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      poker_tables: {
+        Row: {
+          big_blind: number
+          bots_enabled: boolean
+          created_at: string
+          deck: Json | null
+          hand_no: number
+          id: string
+          max_buy_in: number
+          max_seats: number
+          min_buy_in: number
+          name: string
+          small_blind: number
+          state: Json | null
+          table_key: string
+          turn_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          big_blind?: number
+          bots_enabled?: boolean
+          created_at?: string
+          deck?: Json | null
+          hand_no?: number
+          id?: string
+          max_buy_in?: number
+          max_seats?: number
+          min_buy_in?: number
+          name: string
+          small_blind?: number
+          state?: Json | null
+          table_key: string
+          turn_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          big_blind?: number
+          bots_enabled?: boolean
+          created_at?: string
+          deck?: Json | null
+          hand_no?: number
+          id?: string
+          max_buy_in?: number
+          max_seats?: number
+          min_buy_in?: number
+          name?: string
+          small_blind?: number
+          state?: Json | null
+          table_key?: string
+          turn_seconds?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       aviator_rounds: {
         Row: {
           crash_point: number
