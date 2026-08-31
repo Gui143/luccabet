@@ -66,7 +66,8 @@ export function decideBot(state: PokerState, seatIndex: number): BotDecision {
   const strength =
     community.length === 0 ? preflopStrength(seat.hole) : postflopStrength(seat.hole, community);
 
-  const pot = state.seats.reduce((acc, s) => acc + s.committed, 0) + state.seats.reduce((acc, s) => acc + s.bet, 0);
+  // `committed` já inclui a aposta da rodada (bet) - somar os dois dobraria o pote
+  const pot = state.seats.reduce((acc, s) => acc + s.committed, 0);
   const toCall = legal.callAmount;
   const potOdds = toCall > 0 ? toCall / (pot + toCall) : 0;
   const noise = (Math.random() - 0.5) * 0.14;

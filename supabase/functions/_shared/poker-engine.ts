@@ -513,7 +513,13 @@ export interface LegalActions {
   maxRaiseTo: number;
 }
 
-export function legalActions(state: PokerState, seatIndex: number): LegalActions {
+/** Estado mínimo necessário para calcular ações (funciona com o estado público). */
+export type ActionableState = Pick<
+  PokerState,
+  'seats' | 'currentBet' | 'minRaise' | 'lastRaiseSize' | 'bigBlind' | 'turnSeat'
+>;
+
+export function legalActions(state: ActionableState, seatIndex: number): LegalActions {
   const seat = state.seats[seatIndex];
   const base: LegalActions = {
     canFold: false, canCheck: false, canCall: false, canRaise: false,

@@ -203,9 +203,8 @@ const Poker: React.FC = () => {
   );
 
   const toCall = actions?.callAmount ?? 0;
-  const potTotal = state
-    ? state.pots.reduce((a, p) => a + p.amount, 0) + state.seats.reduce((a, s) => a + s.bet, 0)
-    : 0;
+  // pote real: tudo que cada jogador já colocou na mão (inclui cegas e foldados)
+  const potTotal = state ? state.seats.reduce((a, s) => a + s.committed, 0) : 0;
 
   const [raiseTo, setRaiseTo] = useState(0);
   useEffect(() => {
