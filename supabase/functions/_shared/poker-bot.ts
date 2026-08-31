@@ -5,7 +5,7 @@
  * A IA é heurística: força da mão (Chen no pré-flop, categoria feita + draws no
  * post-flop) comparada com as odds do pote, com um pouco de aleatoriedade.
  */
-import { evaluateHand, legalActions, cardRank, cardSuit, type ActionType, type CardCode, type PokerState } from './engine';
+import { evaluateHand, legalActions, cardRank, cardSuit, type ActionType, type CardCode, type PokerState } from './poker-engine.ts';
 
 function preflopStrength(hole: CardCode[]): number {
   if (hole.length !== 2) return 0.3;

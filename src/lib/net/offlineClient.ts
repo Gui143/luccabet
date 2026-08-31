@@ -246,7 +246,12 @@ export class OfflineGameClient implements GameClient {
       }
       this.emitPoker(tableId);
     },
+    tick: (tableId: string) => {
+      this.ensureTable(tableId);
+      this.pokerLoop(tableId);
+    },
     start: (tableId: string) => {
+
       const state = this.ensureTable(tableId);
       this.states.set(tableId, startHand(state, Date.now(), true));
       this.emitPoker(tableId);

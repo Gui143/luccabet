@@ -139,6 +139,11 @@ export class SupabaseGameClient implements GameClient {
       const res = await call('poker-controller', { action: 'start_hand', table_key: tableId });
       if (res.state) this.pushPoker(tableId, res.state, res.you, res.botsEnabled);
     },
+    tick: async (tableId: string) => {
+      const res = await call('poker-controller', { action: 'tick', table_key: tableId });
+      if (res.state) this.pushPoker(tableId, res.state, res.you, res.botsEnabled);
+    },
+
     sync: async (tableId: string) => {
       this.subscribePoker(tableId);
       await this.refreshPoker(tableId);

@@ -171,6 +171,8 @@ export class LocalGameClient implements GameClient {
       this.send({ t: 'poker:action', tableId, action, amount: amount ?? 0 }),
     setBots: (tableId: string, enabled: boolean) => this.send({ t: 'poker:bots', tableId, enabled }),
     start: (tableId: string) => this.send({ t: 'poker:start', tableId }),
+    tick: (tableId: string) => this.send({ t: 'poker:tick', tableId }),
+
     sync: (tableId: string) => this.send({ t: 'poker:sync', tableId }),
   };
 
