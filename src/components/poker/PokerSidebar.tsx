@@ -159,7 +159,7 @@ export const PokerSidebar: React.FC<PokerSidebarProps> = ({
       </Card>
 
       {/* -------------------- Histórico de Ações da Mesa (Dealer Transcript) */}
-      <Card className="bg-neutral-950/80 border border-white/10 shadow-xl backdrop-blur-xl">
+      <Card className="hidden md:block bg-neutral-950/80 border border-white/10 shadow-xl backdrop-blur-xl">
         <CardHeader className="p-3 pb-1">
           <CardTitle className="text-xs font-black text-amber-300 flex items-center justify-between">
             <span className="flex items-center gap-1.5">

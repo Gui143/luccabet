@@ -182,7 +182,7 @@ const Poker: React.FC = () => {
 
             {/* Console de apostas */}
             {isSeated && (
-              <div ref={consoleRef} id="poker-bet-console">
+              <div ref={consoleRef} id="poker-bet-console" className="scroll-mt-16 sm:scroll-mt-0">
                 <PokerBetConsole
                   isMyTurn={isMyTurn}
                   actions={actions}

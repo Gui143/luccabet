@@ -3,6 +3,7 @@ import { Crown, UserPlus } from 'lucide-react';
 import PlayingCard from './PlayingCard';
 import { ChipStack, PokerChip } from './PokerChip';
 import { formatBRLShort } from '@/lib/formatCurrency';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { PublicState, CardCode } from '@/games/poker/engine';
 import { soundManager } from '@/lib/soundManager';
 
@@ -252,9 +253,9 @@ const LuxurySeat: React.FC<LuxurySeatProps> = ({
         )}
       </div>
 
-      {/* Placa de Identificação VIP (Obsidian Glass) */}
+      {/* Placa de Identificação do Jogador */}
       <div
-        className={`relative mt-1 px-2.5 py-1 rounded-xl border backdrop-blur-md text-center min-w-[96px] sm:min-w-[110px] shadow-2xl transition-all ${
+        className={`relative mt-1 px-2 py-1 rounded-xl border backdrop-blur-md text-center min-w-[82px] sm:min-w-[110px] shadow-2xl transition-all ${
           folded
             ? 'bg-red-950/70 border-red-800/50 text-red-300'
             : isTurn
@@ -266,7 +267,7 @@ const LuxurySeat: React.FC<LuxurySeatProps> = ({
       >
         {/* Nome do Jogador */}
         <div className="flex items-center justify-center gap-1">
-          <span className="truncate max-w-[75px] sm:max-w-[90px] text-[11px] font-black">
+          <span className="truncate max-w-[64px] sm:max-w-[90px] text-[10px] sm:text-[11px] font-black">
             {seat.name}
           </span>
           {isYou && (
@@ -325,6 +326,7 @@ export const LuxuryPokerTable: React.FC<LuxuryPokerTableProps> = ({
   serverNow,
   onSit,
 }) => {
+  const isMobile = useIsMobile();
   const themeCfg = THEME_CONFIGS[theme] ?? THEME_CONFIGS['monte-carlo'];
 
   const potTotal = state ? state.seats.reduce((acc, s) => acc + s.committed, 0) : 0;
@@ -340,7 +342,7 @@ export const LuxuryPokerTable: React.FC<LuxuryPokerTableProps> = ({
   const waitingForPlayers = state && state.phase === 'idle';
 
   return (
-    <div className="relative w-full aspect-[16/11] sm:aspect-[16/10] max-h-[480px] xl:max-h-[520px] 2xl:max-h-[580px] select-none mx-auto">
+    <div className="relative w-full aspect-[16/12] sm:aspect-[16/10] max-h-[480px] xl:max-h-[520px] 2xl:max-h-[580px] select-none mx-auto">
       {/* -------------------- Moldura Externa de Couro Acolchoado com Costura Dupla Dourada */}
       <div
         className={`relative w-full h-full rounded-[48%]/[28%] sm:rounded-[50%] p-3 sm:p-5 bg-gradient-to-b from-[#2a1308] via-[#1a0c05] to-[#0d0602] shadow-[0_30px_90px_rgba(0,0,0,0.9),inset_0_2px_4px_rgba(255,255,255,0.2)] border-4 sm:border-8 border-[#381a0b]`}
@@ -356,13 +358,13 @@ export const LuxuryPokerTable: React.FC<LuxuryPokerTableProps> = ({
           {/* Marca d'água do feltro */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <div
-              className="font-black text-center tracking-widest uppercase text-2xl sm:text-4xl opacity-25 select-none"
+              className="font-black text-center tracking-widest uppercase text-lg sm:text-4xl opacity-20 select-none"
               style={{ color: themeCfg.watermarkColor }}
             >
               BRAZUCA BET
             </div>
             <div
-              className="font-bold text-center tracking-wider text-[9px] sm:text-[11px] uppercase opacity-20 mt-1"
+              className="font-bold text-center tracking-wider text-[8px] sm:text-[11px] uppercase opacity-15 mt-1"
               style={{ color: themeCfg.watermarkColor }}
             >
               TEXAS HOLD'EM • NO LIMIT
@@ -381,7 +383,7 @@ export const LuxuryPokerTable: React.FC<LuxuryPokerTableProps> = ({
                 <span className="text-[10px] text-amber-300/80 font-bold tracking-wider uppercase">
                   POTE TOTAL:
                 </span>
-                <span className="text-amber-300 font-black text-base sm:text-xl tabular-nums drop-shadow">
+                <span className="text-amber-300 font-black text-sm sm:text-xl tabular-nums drop-shadow">
                   {formatBRLShort(potTotal)}
                 </span>
               </div>
@@ -404,7 +406,7 @@ export const LuxuryPokerTable: React.FC<LuxuryPokerTableProps> = ({
                   <PlayingCard
                     key={`${state?.handNo}-${i}`}
                     code={card}
-                    width={56}
+                    width={isMobile ? 40 : 56}
                     highlight={winningCardsSet.has(card)}
                     className="drop-shadow-2xl"
                   />
@@ -467,7 +469,7 @@ export const LuxuryPokerTable: React.FC<LuxuryPokerTableProps> = ({
                     deadline={isTurn ? state.actionDeadline : null}
                     winning={winningSeats.has(idx)}
                     winningCardsSet={winningCardsSet}
-                    cardWidth={idx === 0 || isYou ? 46 : 38}
+                    cardWidth={idx === 0 || isYou ? (isMobile ? 38 : 46) : isMobile ? 30 : 38}
                     onSitHere={() => onSit(idx)}
                   />
                 </div>

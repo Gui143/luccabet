@@ -96,17 +96,21 @@ export const PokerTopBar: React.FC<PokerTopBarProps> = ({
             </a>
           </Button>
 
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 flex items-center gap-1.5 drop-shadow">
-                <Crown className="w-4 h-4 text-amber-400" />
-                {tableName}
+              <h1 className="text-sm sm:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 flex items-center gap-1.5 drop-shadow truncate max-w-[46vw] sm:max-w-none">
+                <Crown className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="truncate">{tableName}</span>
               </h1>
-              <Badge className="bg-amber-500/20 text-amber-300 border-amber-400/40 text-[10px] py-0 px-2 font-bold">
+              <Badge className="bg-amber-500/20 text-amber-300 border-amber-400/40 text-[10px] py-0 px-2 font-bold shrink-0">
                 {blinds}
               </Badge>
+              <span className="sm:hidden inline-flex items-center gap-1 text-[10px] text-emerald-400 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                {status === 'open' ? 'Ao vivo' : '…'}
+              </span>
             </div>
-            <div className="text-[10px] text-muted-foreground flex items-center gap-2">
+            <div className="hidden sm:flex text-[10px] text-muted-foreground items-center gap-2">
               <span>Brazuca Bet • Texas Hold&apos;em</span>
               <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />

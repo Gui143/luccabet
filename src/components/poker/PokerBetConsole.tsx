@@ -179,7 +179,7 @@ export const PokerBetConsole: React.FC<PokerBetConsoleProps> = ({
           </div>
 
           {/* Atalhos de Pote Rápidos */}
-          <div className="grid grid-cols-6 gap-1 sm:gap-1.5">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 sm:gap-1.5">
             <Button
               type="button"
               variant="outline"
