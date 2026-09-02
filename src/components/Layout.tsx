@@ -60,7 +60,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <ThemeBackground />
       {/* Top Header */}
       <header className="border-b border-border bg-card/95 backdrop-blur-xl sticky top-0 z-50">
-        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4">
+        <div className="w-full max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="flex items-center justify-between h-14 gap-3">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
@@ -126,8 +126,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      {/* Main Content (Otimizado com margens seguras anti-overscan para monitores 1920x1080) */}
+      <main className="w-full max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-3 sm:py-5">
         {children}
       </main>
 
