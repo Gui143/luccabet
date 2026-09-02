@@ -64,7 +64,7 @@ const TABLES: PokerRoomConfig[] = [
     minBuyIn: 100,
     maxBuyIn: 500,
     maxSeats: 6,
-    turnSeconds: 30,
+    turnSeconds: 25,
     botsEnabled: true,
   },
   {
@@ -75,7 +75,40 @@ const TABLES: PokerRoomConfig[] = [
     minBuyIn: 200,
     maxBuyIn: 1000,
     maxSeats: 6,
-    turnSeconds: 30,
+    turnSeconds: 25,
+    botsEnabled: true,
+  },
+  {
+    tableId: 'texas-25-50',
+    tableName: 'Monte Carlo VIP • R$ 25 / R$ 50',
+    smallBlind: 25,
+    bigBlind: 50,
+    minBuyIn: 1000,
+    maxBuyIn: 5000,
+    maxSeats: 6,
+    turnSeconds: 25,
+    botsEnabled: true,
+  },
+  {
+    tableId: 'texas-100-200',
+    tableName: 'Macau High Roller • R$ 100 / R$ 200',
+    smallBlind: 100,
+    bigBlind: 200,
+    minBuyIn: 5000,
+    maxBuyIn: 25000,
+    maxSeats: 6,
+    turnSeconds: 25,
+    botsEnabled: true,
+  },
+  {
+    tableId: 'texas-500-1000',
+    tableName: 'Bellagio Diamond Suite • R$ 500 / R$ 1.000',
+    smallBlind: 500,
+    bigBlind: 1000,
+    minBuyIn: 20000,
+    maxBuyIn: 100000,
+    maxSeats: 6,
+    turnSeconds: 25,
     botsEnabled: true,
   },
 ];
@@ -115,6 +148,29 @@ const server = http.createServer((req, res) => {
       players: wsClients.size,
       startBalance: START_BALANCE,
     });
+  }
+
+  if (url.pathname === '/api/faucet' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (c) => (body += c));
+    req.on('end', () => {
+      try {
+        const parsed = JSON.parse(body || '{}') as { token?: string; amount?: number };
+        const playerId = verifyToken(parsed.token ?? '');
+        if (!playerId) return json(res, { error: 'Sessão expirada' }, 401);
+        const amount = Math.max(100, Math.min(1000000, Number(parsed.amount ?? 50000)));
+        const newBal = credit(playerId, amount);
+        for (const [ws, sess] of wsClients.entries()) {
+          if (sess.playerId === playerId) {
+            send(ws, { t: 'wallet', balance: newBal });
+          }
+        }
+        return json(res, { ok: true, balance: newBal });
+      } catch {
+        return json(res, { error: 'Requisição inválida' }, 400);
+      }
+    });
+    return;
   }
 
   if (url.pathname === '/api/tables') {

@@ -14,13 +14,16 @@ import {
 
 const BALANCE_KEY = 'luccabet:offline-balance';
 const NAME_KEY = 'luccabet:guest-name';
-const START_BALANCE = 1000;
+const START_BALANCE = 10000;
 
-const BOT_NAMES = ['Ana', 'Bruno', 'Caio', 'Duda', 'Elisa', 'Felipe', 'Gabi', 'Henrique', 'Isabela', 'João'];
+const BOT_NAMES = ['Ana', 'Bruno', 'Caio', 'Duda', 'Elisa', 'Felipe', 'Gabi', 'Henrique', 'Isabela', 'João', 'Matheus', 'Valentina', 'Rodrigo', 'Camila'];
 
 const TABLES = [
-  { tableId: 'offline-2-5', tableName: 'Mesa Treino • R$ 2 / R$ 5', smallBlind: 2, bigBlind: 5, minBuyIn: 100, maxBuyIn: 500 },
-  { tableId: 'offline-5-10', tableName: 'Mesa Treino • R$ 5 / R$ 10', smallBlind: 5, bigBlind: 10, minBuyIn: 200, maxBuyIn: 1000 },
+  { tableId: 'offline-2-5', tableName: 'Mesa Rio • R$ 2 / R$ 5', smallBlind: 2, bigBlind: 5, minBuyIn: 100, maxBuyIn: 500 },
+  { tableId: 'offline-5-10', tableName: 'Mesa Las Vegas • R$ 5 / R$ 10', smallBlind: 5, bigBlind: 10, minBuyIn: 200, maxBuyIn: 1000 },
+  { tableId: 'offline-25-50', tableName: 'Monte Carlo VIP • R$ 25 / R$ 50', smallBlind: 25, bigBlind: 50, minBuyIn: 1000, maxBuyIn: 5000 },
+  { tableId: 'offline-100-200', tableName: 'Macau High Roller • R$ 100 / R$ 200', smallBlind: 100, bigBlind: 200, minBuyIn: 5000, maxBuyIn: 25000 },
+  { tableId: 'offline-500-1000', tableName: 'Bellagio Diamond Suite • R$ 500 / R$ 1.000', smallBlind: 500, bigBlind: 1000, minBuyIn: 20000, maxBuyIn: 100000 },
 ];
 
 const readBalance = () => Number(localStorage.getItem(BALANCE_KEY) ?? START_BALANCE);

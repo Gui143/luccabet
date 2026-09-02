@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = resolve(__dirname, '.data');
 const FILE = resolve(DATA_DIR, 'wallets.json');
 
-export const START_BALANCE = 1000; // saldo de demonstração (BRL)
+export const START_BALANCE = 10000; // saldo inicial VIP de demonstração (BRL)
 
 export interface Wallet {
   playerId: string;
