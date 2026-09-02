@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Crown, Sparkles, Trophy, UserPlus, Volume2, Shield, Flame } from 'lucide-react';
+import { Crown, UserPlus } from 'lucide-react';
 import PlayingCard from './PlayingCard';
 import { ChipStack, PokerChip } from './PokerChip';
 import { formatBRLShort } from '@/lib/formatCurrency';
@@ -353,19 +353,19 @@ export const LuxuryPokerTable: React.FC<LuxuryPokerTableProps> = ({
           className={`relative w-full h-full rounded-[48%]/[28%] sm:rounded-[50%] overflow-hidden ${themeCfg.innerGlow} flex items-center justify-center`}
           style={{ background: themeCfg.feltBg }}
         >
-          {/* Padrão de Marca D'água Monograma / Brasão LuccaBet VIP */}
+          {/* Marca d'água do feltro */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <div
-              className="font-black text-center tracking-widest uppercase text-3xl sm:text-5xl opacity-40 select-none"
+              className="font-black text-center tracking-widest uppercase text-2xl sm:text-4xl opacity-25 select-none"
               style={{ color: themeCfg.watermarkColor }}
             >
-              LUCCABET
+              BRAZUCA BET
             </div>
             <div
-              className="font-bold text-center tracking-wider text-[10px] sm:text-xs uppercase opacity-30 mt-1"
+              className="font-bold text-center tracking-wider text-[9px] sm:text-[11px] uppercase opacity-20 mt-1"
               style={{ color: themeCfg.watermarkColor }}
             >
-              VIP HIGH ROLLER LOUNGE • NO LIMIT HOLD'EM
+              TEXAS HOLD'EM • NO LIMIT
             </div>
           </div>
 

@@ -99,13 +99,26 @@ export const PokerBetConsole: React.FC<PokerBetConsoleProps> = ({
   };
 
   return (
-    <div className="w-full bg-gradient-to-b from-neutral-900/95 via-stone-950/95 to-black/98 backdrop-blur-xl border border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-[0_10px_35px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(251,191,36,0.3)]">
-      {/* -------------------- Radar de Força da Mão (Sempre visível para passar visão no Story) */}
+    <div
+      className={`w-full bg-gradient-to-b from-neutral-900/95 via-stone-950/95 to-black/98 backdrop-blur-xl rounded-2xl p-3 sm:p-4 shadow-[0_10px_35px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(251,191,36,0.3)] transition-all ${
+        isMyTurn
+          ? 'border-2 border-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.35)]'
+          : 'border border-amber-500/40'
+      }`}
+    >
+      {/* -------------------- Força da mão */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2 border-b border-white/10 text-xs">
+        {isMyTurn && (
+          <div className="w-full flex items-center gap-2 pb-1">
+            <span className="px-2 py-0.5 rounded-full bg-amber-400 text-black font-black text-[11px] tracking-wide animate-pulse">
+              SUA VEZ — ESCOLHA UMA AÇÃO
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <div className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 font-black text-[11px] flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>RADAR VIP:</span>
+            <span>SUA MÃO:</span>
           </div>
 
           <span className="font-bold text-white text-xs sm:text-sm">
@@ -342,7 +355,7 @@ export const PokerBetConsole: React.FC<PokerBetConsoleProps> = ({
         <div className="py-2 px-3 text-center flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="text-xs text-muted-foreground flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-            <span>{waitingMessage || 'Aguardando a jogada dos outros competidores da mesa VIP…'}</span>
+            <span>{waitingMessage || 'Aguardando a jogada dos outros competidores…'}</span>
           </div>
 
           <div className="text-[11px] text-amber-300/90 font-semibold flex items-center gap-1">

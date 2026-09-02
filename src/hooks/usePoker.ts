@@ -24,6 +24,11 @@ export function usePoker(initialTableId: string = DEFAULT_TABLE_ID) {
 
   const lastHandNo = useRef(0);
   const lastPhase = useRef<string>('idle');
+  // refs para não re-criar os listeners a cada render do AuthContext
+  const syncBalanceRef = useRef(syncBalance);
+  syncBalanceRef.current = syncBalance;
+  const userIdRef = useRef(user?.id);
+  userIdRef.current = user?.id;
 
   // ------------------------------------------------------------ conexão
   useEffect(() => {
@@ -45,7 +50,7 @@ export function usePoker(initialTableId: string = DEFAULT_TABLE_ID) {
       }
 
       unsubs.push(c.onStatus(setStatus));
-      unsubs.push(c.onWallet((balance) => syncBalance(balance)));
+      unsubs.push(c.onWallet((balance) => syncBalanceRef.current(balance)));
       unsubs.push(c.onError((message) => toast.error(message)));
       unsubs.push(
         c.onPokerState((v) => {
@@ -63,12 +68,12 @@ export function usePoker(initialTableId: string = DEFAULT_TABLE_ID) {
           if (st.phase === 'finished' && st.handNo !== lastHandNo.current) {
             lastHandNo.current = st.handNo;
             const me = st.seats[v.you.seat];
-            const won = (st.winners ?? []).filter((w) => w.playerId === user?.id).reduce((a, w) => a + w.amount, 0);
+            const won = (st.winners ?? []).filter((w) => w.playerId === userIdRef.current).reduce((a, w) => a + w.amount, 0);
             if (me && (me.committed > 0 || won > 0)) {
               soundManager.playWin();
               if (won > 0) toast.success(`Você ganhou R$ ${won.toFixed(2).replace('.', ',')}!`);
               void recordGameOutcome({
-                userId: user?.id,
+                userId: userIdRef.current,
                 gameName: 'Poker',
                 betAmount: me.committed,
                 multiplier: me.committed > 0 ? won / me.committed : 0,
@@ -85,7 +90,7 @@ export function usePoker(initialTableId: string = DEFAULT_TABLE_ID) {
       alive = false;
       unsubs.forEach((u) => u());
     };
-  }, [tableId, user?.id, syncBalance]);
+  }, [tableId, user?.id]);
 
   // re-entrar na mesa quando trocar de mesa
   useEffect(() => {
@@ -125,10 +130,11 @@ export function usePoker(initialTableId: string = DEFAULT_TABLE_ID) {
     client?.poker.start(tableId);
   }, [client, tableId]);
 
-  // mantém a mesa andando: no Lovable Cloud nada roda sozinho, então o cliente
-  // chama `tick` periodicamente (é idempotente — custo zero quando não há nada a fazer)
+  // No Lovable Cloud nada roda sozinho, então o cliente chama `tick`
+  // periodicamente (idempotente). No servidor local / offline já existe um
+  // loop próprio — não duplicamos a carga para não travar a mesa.
   useEffect(() => {
-    if (!client) return;
+    if (!client || client.mode !== 'supabase') return;
     const id = setInterval(() => client.poker.tick(tableId), 2000);
     return () => clearInterval(id);
   }, [client, tableId]);

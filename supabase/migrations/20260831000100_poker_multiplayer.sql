@@ -103,10 +103,10 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------- seed
-INSERT INTO public.poker_tables (table_key, name, small_blind, big_blind, min_buy_in, max_buy_in, max_seats, bots_enabled)
+INSERT INTO public.poker_tables (table_key, name, small_blind, big_blind, min_buy_in, max_buy_in, max_seats, turn_seconds, bots_enabled)
 VALUES
-  ('texas-2-5',  'Mesa Rio • R$ 2 / R$ 5',    2,  5,  100, 500,  6, true),
-  ('texas-5-10', 'Mesa Vegas • R$ 5 / R$ 10', 5,  10, 200, 1000, 6, true)
+  ('texas-2-5',  'Mesa Rio',    2,  5,  100, 500,  6, 40, true),
+  ('texas-5-10', 'Mesa Vegas',  5,  10, 200, 1000, 6, 40, true)
 ON CONFLICT (table_key) DO NOTHING;
 
 INSERT INTO public.poker_table_secrets (table_id, deck, seed)
