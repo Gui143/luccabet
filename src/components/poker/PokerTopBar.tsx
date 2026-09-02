@@ -87,7 +87,7 @@ export const PokerTopBar: React.FC<PokerTopBarProps> = ({
 
   return (
     <>
-      <div className="w-full bg-gradient-to-r from-neutral-950 via-stone-900 to-neutral-950 border-b border-amber-500/30 px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 shadow-2xl backdrop-blur-xl">
+      <div className="w-full bg-gradient-to-r from-neutral-950 via-stone-900 to-neutral-950 border border-amber-500/40 rounded-2xl px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 shadow-2xl backdrop-blur-xl">
         {/* Lado Esquerdo: Voltar + Info da Mesa VIP */}
         <div className="flex items-center gap-2.5">
           <Button

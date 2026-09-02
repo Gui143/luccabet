@@ -60,14 +60,14 @@ export const THEME_CONFIGS: Record<TableTheme, ThemeStyles> = {
   },
 };
 
-/** Posições das 6 cadeiras em porcentagem (elipse otimizada para mobile & desktop) */
+/** Posições das 6 cadeiras em porcentagem (com margens seguras anti-overscan) */
 const SEAT_POSITIONS = [
-  { x: 50, y: 88, chipX: 50, chipY: 71, dealerX: 42, dealerY: 76 }, // Assento 0 (Você - Centro Inferior)
-  { x: 89, y: 64, chipX: 77, chipY: 60, dealerX: 82, dealerY: 53 }, // Assento 1 (Direita Inferior)
-  { x: 84, y: 15, chipX: 74, chipY: 26, dealerX: 78, dealerY: 34 }, // Assento 2 (Direita Superior)
-  { x: 50, y: 7,  chipX: 50, chipY: 21, dealerX: 50, dealerY: 29 }, // Assento 3 (Centro Superior)
-  { x: 16, y: 15, chipX: 26, chipY: 26, dealerX: 22, dealerY: 34 }, // Assento 4 (Esquerda Superior)
-  { x: 11, y: 64, chipX: 23, chipY: 60, dealerX: 18, dealerY: 53 }, // Assento 5 (Esquerda Inferior)
+  { x: 50, y: 84, chipX: 50, chipY: 68, dealerX: 42, dealerY: 74 }, // Assento 0 (Você - Centro Inferior)
+  { x: 86, y: 62, chipX: 74, chipY: 58, dealerX: 79, dealerY: 51 }, // Assento 1 (Direita Inferior)
+  { x: 81, y: 18, chipX: 72, chipY: 28, dealerX: 76, dealerY: 34 }, // Assento 2 (Direita Superior)
+  { x: 50, y: 10, chipX: 50, chipY: 23, dealerX: 50, dealerY: 30 }, // Assento 3 (Centro Superior)
+  { x: 19, y: 18, chipX: 28, chipY: 28, dealerX: 24, dealerY: 34 }, // Assento 4 (Esquerda Superior)
+  { x: 14, y: 62, chipX: 26, chipY: 58, dealerX: 21, dealerY: 51 }, // Assento 5 (Esquerda Inferior)
 ];
 
 const VIP_AVATARS = [
@@ -340,7 +340,7 @@ export const LuxuryPokerTable: React.FC<LuxuryPokerTableProps> = ({
   const waitingForPlayers = state && state.phase === 'idle';
 
   return (
-    <div className="relative w-full aspect-[16/11] sm:aspect-[16/10] max-h-[640px] select-none">
+    <div className="relative w-full aspect-[16/11] sm:aspect-[16/10] max-h-[480px] xl:max-h-[520px] 2xl:max-h-[580px] select-none mx-auto">
       {/* -------------------- Moldura Externa de Couro Acolchoado com Costura Dupla Dourada */}
       <div
         className={`relative w-full h-full rounded-[48%]/[28%] sm:rounded-[50%] p-3 sm:p-5 bg-gradient-to-b from-[#2a1308] via-[#1a0c05] to-[#0d0602] shadow-[0_30px_90px_rgba(0,0,0,0.9),inset_0_2px_4px_rgba(255,255,255,0.2)] border-4 sm:border-8 border-[#381a0b]`}

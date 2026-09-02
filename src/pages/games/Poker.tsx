@@ -154,7 +154,7 @@ const Poker: React.FC = () => {
 
   return (
     <Layout>
-      <div className="w-full max-w-7xl mx-auto space-y-3 pb-8">
+      <div className="w-full max-w-7xl 2xl:max-w-[1560px] mx-auto space-y-3 pb-6 px-1 sm:px-2">
         {/* -------------------- Top Bar VIP com Navegação, Faucet e Story Flex */}
         <PokerTopBar
           tableName={tableNameDisplay}
@@ -173,12 +173,12 @@ const Poker: React.FC = () => {
           onLeaveTable={leave}
         />
 
-        {/* -------------------- Layout Principal da Sala de Poker VIP */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-3.5 items-start">
+        {/* -------------------- Layout Principal da Sala de Poker VIP (Otimizado para 1920x1080) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_290px] xl:grid-cols-[1fr_310px] gap-3 items-start">
           {/* Lado Esquerdo: Mesa de Luxo + Console de Apostas */}
           <div className="space-y-3">
             {/* Masterpiece Luxury Poker Table */}
-            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-b from-neutral-950 via-neutral-900 to-black p-2 sm:p-4 border border-amber-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-b from-neutral-950 via-neutral-900 to-black p-2 sm:p-3 border border-amber-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)]">
               <LuxuryPokerTable
                 state={state}
                 userId={user?.id}
