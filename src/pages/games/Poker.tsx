@@ -251,7 +251,7 @@ const Poker: React.FC = () => {
           tableName={tableNameDisplay}
           blinds={blindsDisplay}
           winAmount={winCelebration.amount > 0 ? winCelebration.amount : potTotal > 0 ? potTotal : (my?.chips ?? user?.balance ?? 50000)}
-          handName={my?.bestHand?.name ?? winCelebration.handName || 'Mão Vencedora'}
+          handName={my?.bestHand?.name ?? (winCelebration.handName || 'Mão Vencedora')}
           holeCards={my?.hole && my.hole.length === 2 ? my.hole : ['as', 'ah']}
           communityCards={state?.community ?? []}
           balance={user?.balance ?? 0}
