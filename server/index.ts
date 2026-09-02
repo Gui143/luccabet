@@ -1,5 +1,5 @@
 /**
- * Servidor de jogos do LuccaBet (autoritativo).
+ * Servidor de jogos do Brazuca Bet (autoritativo).
  *
  *  - WebSocket em /ws  (poker + aviator em tempo real)
  *  - HTTP: GET /api/health, GET /api/tables, POST /api/guest
@@ -58,57 +58,57 @@ const walletApi = {
 const TABLES: PokerRoomConfig[] = [
   {
     tableId: 'texas-2-5',
-    tableName: 'Mesa Rio • R$ 2 / R$ 5',
+    tableName: 'Mesa Rio',
     smallBlind: 2,
     bigBlind: 5,
     minBuyIn: 100,
     maxBuyIn: 500,
     maxSeats: 6,
-    turnSeconds: 25,
+    turnSeconds: 40,
     botsEnabled: true,
   },
   {
     tableId: 'texas-5-10',
-    tableName: 'Mesa Vegas • R$ 5 / R$ 10',
+    tableName: 'Mesa Vegas',
     smallBlind: 5,
     bigBlind: 10,
     minBuyIn: 200,
     maxBuyIn: 1000,
     maxSeats: 6,
-    turnSeconds: 25,
+    turnSeconds: 40,
     botsEnabled: true,
   },
   {
     tableId: 'texas-25-50',
-    tableName: 'Monte Carlo VIP • R$ 25 / R$ 50',
+    tableName: 'Monte Carlo',
     smallBlind: 25,
     bigBlind: 50,
     minBuyIn: 1000,
     maxBuyIn: 5000,
     maxSeats: 6,
-    turnSeconds: 25,
+    turnSeconds: 40,
     botsEnabled: true,
   },
   {
     tableId: 'texas-100-200',
-    tableName: 'Macau High Roller • R$ 100 / R$ 200',
+    tableName: 'Macau High Roller',
     smallBlind: 100,
     bigBlind: 200,
     minBuyIn: 5000,
     maxBuyIn: 25000,
     maxSeats: 6,
-    turnSeconds: 25,
+    turnSeconds: 40,
     botsEnabled: true,
   },
   {
     tableId: 'texas-500-1000',
-    tableName: 'Bellagio Diamond Suite • R$ 500 / R$ 1.000',
+    tableName: 'Bellagio Diamond Suite',
     smallBlind: 500,
     bigBlind: 1000,
     minBuyIn: 20000,
     maxBuyIn: 100000,
     maxSeats: 6,
-    turnSeconds: 25,
+    turnSeconds: 40,
     botsEnabled: true,
   },
 ];

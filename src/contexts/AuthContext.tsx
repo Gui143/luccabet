@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { healthCheck, createOrRestoreSession, clearStoredToken, setStoredName } from '@/lib/net/localClient';
@@ -140,7 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthMode('local');
       setUser({
         id: session.playerId,
-        email: 'convidado@luccabet.local',
+        email: 'convidado@brazucabet.local',
         username: session.name,
         balance: session.balance,
       });
@@ -163,9 +163,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const syncBalance = (balance: number) => {
+  const syncBalance = useCallback((balance: number) => {
     setUser((prev) => (prev ? { ...prev, balance } : prev));
-  };
+  }, []);
 
   const loadUserProfile = async (userId: string) => {
     const { data: profile } = await supabase

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePoker, DEFAULT_TABLE_ID } from '@/hooks/usePoker';
@@ -12,7 +12,6 @@ import LuxuryPokerTable, { type TableTheme } from '@/components/poker/LuxuryPoke
 import PokerBetConsole from '@/components/poker/PokerBetConsole';
 import PokerSidebar from '@/components/poker/PokerSidebar';
 import PokerTopBar from '@/components/poker/PokerTopBar';
-import PokerStoryModal from '@/components/poker/PokerStoryModal';
 import PokerWinCelebration from '@/components/poker/PokerWinCelebration';
 
 const Poker: React.FC = () => {
@@ -29,7 +28,6 @@ const Poker: React.FC = () => {
     tables,
     setTableId,
     tableId,
-    mode,
     status,
     serverNow,
   } = poker;
@@ -37,7 +35,6 @@ const Poker: React.FC = () => {
   const [currentTheme, setCurrentTheme] = useState<TableTheme>('monte-carlo');
   const [buyIn, setBuyIn] = useState(1000);
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
-  const [storyOpen, setStoryOpen] = useState(false);
   const [winCelebration, setWinCelebration] = useState<{
     show: boolean;
     winnerName: string;
@@ -52,6 +49,9 @@ const Poker: React.FC = () => {
     handName: '',
   });
 
+  const consoleRef = useRef<HTMLDivElement | null>(null);
+  const lastMyTurn = useRef(false);
+
   const table: PokerTableInfo | undefined = useMemo(
     () => tables.find((t) => t.tableId === tableId),
     [tables, tableId],
@@ -64,13 +64,6 @@ const Poker: React.FC = () => {
     setBuyIn((prev) => Math.min(maxBuyIn, Math.max(minBuyIn, prev || minBuyIn * 5)));
   }, [minBuyIn, maxBuyIn]);
 
-  // Atualiza relógio para cronômetros suaves
-  const [, forceTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => forceTick((n) => n + 1), 250);
-    return () => clearInterval(id);
-  }, []);
-
   const my = mySeat >= 0 && state ? state.seats[mySeat] : null;
   const isSeated = !!my;
   const isMyTurn = !!state && state.turnSeat === mySeat && mySeat >= 0;
@@ -82,11 +75,13 @@ const Poker: React.FC = () => {
 
   const potTotal = state ? state.seats.reduce((a, s) => a + s.committed, 0) : 0;
 
-  // Som ao ser a vez do jogador
+  // Som + rolagem suave até o console quando chega a sua vez
   useEffect(() => {
-    if (isMyTurn) {
+    if (isMyTurn && !lastMyTurn.current) {
       soundManager.playTurnAlert();
+      consoleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
+    lastMyTurn.current = isMyTurn;
   }, [isMyTurn]);
 
   // Efeito ao finalizar mão e detectar vencedor
@@ -119,7 +114,7 @@ const Poker: React.FC = () => {
 
     if (seat < 0) return;
     if ((user?.balance ?? 0) < buyIn) {
-      toast.error('Saldo insuficiente! Clique em "+ Banca VIP" no topo para recarregar.');
+      toast.error('Saldo insuficiente! Clique em "+ Saldo" no topo para recarregar.');
       return;
     }
     soundManager.playChipSplash();
@@ -142,42 +137,39 @@ const Poker: React.FC = () => {
     }
     await updateBalance(amount);
     soundManager.playCashout();
-    toast.success(`+ ${formatBRLShort(amount)} adicionados à sua Banca VIP! 💎✨`);
+    toast.success(`+ ${formatBRLShort(amount)} adicionados ao saldo!`);
   };
 
-  const tableNameDisplay = table?.tableName ?? state?.tableName ?? 'Monte Carlo VIP Suite';
+  const tableNameDisplay = table?.tableName ?? state?.tableName ?? 'Texas Hold\u2019em';
   const blindsDisplay = state
     ? `R$ ${state.smallBlind} / R$ ${state.bigBlind}`
     : table
       ? `R$ ${table.smallBlind} / R$ ${table.bigBlind}`
-      : 'R$ 25 / R$ 50';
+      : 'R$ 2 / R$ 5';
 
   return (
     <Layout>
       <div className="w-full max-w-7xl 2xl:max-w-[1560px] mx-auto space-y-3 pb-6 px-1 sm:px-2">
-        {/* -------------------- Top Bar VIP com Navegação, Faucet e Story Flex */}
+        {/* -------------------- Barra superior: mesa, saldo e controles */}
         <PokerTopBar
           tableName={tableNameDisplay}
           blinds={blindsDisplay}
           userBalance={user?.balance ?? 0}
           isSeated={isSeated}
           status={status}
-          mode={mode}
           currentTheme={currentTheme}
           tables={tables}
           currentTableId={tableId}
           onSelectTheme={setCurrentTheme}
           onSelectTable={setTableId}
-          onOpenStory={() => setStoryOpen(true)}
           onAddVipFunds={handleAddVipFunds}
           onLeaveTable={leave}
         />
 
-        {/* -------------------- Layout Principal da Sala de Poker VIP (Otimizado para 1920x1080) */}
+        {/* -------------------- Layout principal: mesa + console + sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_290px] xl:grid-cols-[1fr_310px] gap-3 items-start">
-          {/* Lado Esquerdo: Mesa de Luxo + Console de Apostas */}
+          {/* Mesa + Console */}
           <div className="space-y-3">
-            {/* Masterpiece Luxury Poker Table */}
             <div className="relative rounded-3xl overflow-hidden bg-gradient-to-b from-neutral-950 via-neutral-900 to-black p-2 sm:p-3 border border-amber-500/30 shadow-[0_0_50px_rgba(0,0,0,0.8)]">
               <LuxuryPokerTable
                 state={state}
@@ -188,37 +180,39 @@ const Poker: React.FC = () => {
               />
             </div>
 
-            {/* Console de Apostas VIP (Bottom Dock) */}
+            {/* Console de apostas */}
             {isSeated && (
-              <PokerBetConsole
-                isMyTurn={isMyTurn}
-                actions={actions}
-                currentBet={state?.currentBet ?? 0}
-                potTotal={potTotal}
-                bigBlind={state?.bigBlind ?? 5}
-                playerChips={my?.chips ?? 0}
-                myHole={my?.hole ?? []}
-                communityCards={state?.community ?? []}
-                waitingMessage={
-                  state?.phase === 'finished'
-                    ? 'Mão encerrada — preparando a próxima rodada VIP…'
-                    : state?.phase === 'idle'
-                      ? 'Aguardando pelo menos 2 competidores na mesa…'
-                      : undefined
-                }
-                onAct={act}
-              />
+              <div ref={consoleRef} id="poker-bet-console" className="scroll-mt-16 sm:scroll-mt-0">
+                <PokerBetConsole
+                  isMyTurn={isMyTurn}
+                  actions={actions}
+                  currentBet={state?.currentBet ?? 0}
+                  potTotal={potTotal}
+                  bigBlind={state?.bigBlind ?? 5}
+                  playerChips={my?.chips ?? 0}
+                  myHole={my?.hole ?? []}
+                  communityCards={state?.community ?? []}
+                  waitingMessage={
+                    state?.phase === 'finished'
+                      ? 'Mão encerrada — preparando a próxima rodada…'
+                      : state?.phase === 'idle'
+                        ? 'Aguardando pelo menos 2 competidores na mesa…'
+                        : undefined
+                  }
+                  onAct={act}
+                />
+              </div>
             )}
           </div>
 
-          {/* Lado Direito: Sidebar VIP com Entrada, Perfil e Histórico */}
+          {/* Sidebar: entrada, perfil e histórico */}
           <PokerSidebar
             isSeated={isSeated}
             minBuyIn={minBuyIn}
             maxBuyIn={maxBuyIn}
             buyIn={buyIn}
             userBalance={user?.balance ?? 0}
-            nickname={user?.username ?? 'Jogador VIP'}
+            nickname={user?.username ?? 'Jogador'}
             botsEnabled={view?.botsEnabled ?? true}
             log={state?.log ?? []}
             chipsInPlay={my?.chips ?? 0}
@@ -229,32 +223,14 @@ const Poker: React.FC = () => {
           />
         </div>
 
-        {/* -------------------- Celebração de Vitória (Confetes + Troféu) */}
+        {/* -------------------- Celebração de vitória */}
         <PokerWinCelebration
           show={winCelebration.show}
           winnerName={winCelebration.winnerName}
           isYou={winCelebration.isYou}
           amount={winCelebration.amount}
           handName={winCelebration.handName}
-          onOpenStory={() => {
-            setWinCelebration((prev) => ({ ...prev, show: false }));
-            setStoryOpen(true);
-          }}
           onDismiss={() => setWinCelebration((prev) => ({ ...prev, show: false }))}
-        />
-
-        {/* -------------------- Modal Gerador de Stories do Instagram (Story Flex) */}
-        <PokerStoryModal
-          isOpen={storyOpen}
-          onClose={() => setStoryOpen(false)}
-          username={user?.username ?? 'Jogador VIP'}
-          tableName={tableNameDisplay}
-          blinds={blindsDisplay}
-          winAmount={winCelebration.amount > 0 ? winCelebration.amount : potTotal > 0 ? potTotal : (my?.chips ?? user?.balance ?? 50000)}
-          handName={my?.bestHand?.name ?? (winCelebration.handName || 'Mão Vencedora')}
-          holeCards={my?.hole && my.hole.length === 2 ? my.hole : ['as', 'ah']}
-          communityCards={state?.community ?? []}
-          balance={user?.balance ?? 0}
         />
       </div>
     </Layout>

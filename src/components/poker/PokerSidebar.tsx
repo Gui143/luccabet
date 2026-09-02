@@ -57,7 +57,7 @@ export const PokerSidebar: React.FC<PokerSidebarProps> = ({
           <CardHeader className="p-3 pb-1">
             <CardTitle className="text-xs font-black text-amber-300 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
-                <Crown className="w-4 h-4 text-amber-400" /> ENTRAR NA MESA VIP
+                <Crown className="w-4 h-4 text-amber-400" /> ENTRAR NA MESA
               </span>
               <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 text-[10px]">
                 Com Fichas
@@ -110,7 +110,7 @@ export const PokerSidebar: React.FC<PokerSidebarProps> = ({
               onClick={onSit}
             >
               {userBalance < buyIn
-                ? 'Saldo insuficiente (Recarregue acima)'
+                ? 'Saldo insuficiente (use + Saldo)'
                 : `Sentar com ${formatBRLShort(buyIn)} 👑`}
             </Button>
             <p className="text-[10px] text-muted-foreground text-center">
@@ -125,9 +125,9 @@ export const PokerSidebar: React.FC<PokerSidebarProps> = ({
         <CardContent className="p-3 space-y-2">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground flex items-center gap-1">
-              <User className="w-3.5 h-3.5 text-amber-400" /> Seu Apelido VIP:
+              <User className="w-3.5 h-3.5 text-amber-400" /> Seu apelido:
             </span>
-            <span className="text-[10px] text-amber-300 font-bold">💎 HIGH ROLLER</span>
+            <span className="text-[10px] text-amber-300 font-bold">BRAZUCA BET</span>
           </div>
 
           <div className="flex gap-1.5">
@@ -159,7 +159,7 @@ export const PokerSidebar: React.FC<PokerSidebarProps> = ({
       </Card>
 
       {/* -------------------- Histórico de Ações da Mesa (Dealer Transcript) */}
-      <Card className="bg-neutral-950/80 border border-white/10 shadow-xl backdrop-blur-xl">
+      <Card className="hidden md:block bg-neutral-950/80 border border-white/10 shadow-xl backdrop-blur-xl">
         <CardHeader className="p-3 pb-1">
           <CardTitle className="text-xs font-black text-amber-300 flex items-center justify-between">
             <span className="flex items-center gap-1.5">

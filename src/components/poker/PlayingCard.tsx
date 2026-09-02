@@ -118,7 +118,7 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
                 VIP
               </div>
               <div className="text-amber-500/70 text-[7px] font-bold tracking-tighter">
-                LUCCABET
+                BRAZUCA BET
               </div>
             </div>
           </div>

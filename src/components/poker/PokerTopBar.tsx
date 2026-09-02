@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import {
   ArrowLeft,
-  Camera,
   Coins,
   Crown,
   LogOut,
   Palette,
-  Sparkles,
+  PlusCircle,
   Volume2,
   VolumeX,
   Wifi,
-  WifiOff,
   Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,23 +39,21 @@ interface PokerTopBarProps {
   userBalance: number;
   isSeated: boolean;
   status: 'connecting' | 'open' | 'closed';
-  mode: string;
   currentTheme: TableTheme;
   tables: PokerTableInfo[];
   currentTableId: string;
   onSelectTheme: (theme: TableTheme) => void;
   onSelectTable: (tableId: string) => void;
-  onOpenStory: () => void;
   onAddVipFunds: (amount: number) => void;
   onLeaveTable: () => void;
 }
 
-const THEMES: { id: TableTheme; label: string; iconColor: string }[] = [
-  { id: 'monte-carlo', label: 'Monte Carlo Emerald 🟢', iconColor: 'bg-emerald-600' },
-  { id: 'bellagio-obsidian', label: 'Bellagio Obsidian & Gold ⚫', iconColor: 'bg-neutral-900 border border-amber-400' },
-  { id: 'macau-ruby', label: 'Macau Imperial Ruby 🔴', iconColor: 'bg-rose-900' },
-  { id: 'dubai-sapphire', label: 'Dubai Royal Sapphire 🔵', iconColor: 'bg-blue-900' },
-  { id: 'monaco-amethyst', label: 'Monaco Royal Amethyst 🟣', iconColor: 'bg-purple-900' },
+const THEMES: { id: TableTheme; label: string }[] = [
+  { id: 'monte-carlo', label: 'Verde Clássico' },
+  { id: 'bellagio-obsidian', label: 'Preto & Ouro' },
+  { id: 'macau-ruby', label: 'Rubi' },
+  { id: 'dubai-sapphire', label: 'Safira' },
+  { id: 'monaco-amethyst', label: 'Ametista' },
 ];
 
 export const PokerTopBar: React.FC<PokerTopBarProps> = ({
@@ -66,13 +62,11 @@ export const PokerTopBar: React.FC<PokerTopBarProps> = ({
   userBalance,
   isSeated,
   status,
-  mode,
   currentTheme,
   tables,
   currentTableId,
   onSelectTheme,
   onSelectTable,
-  onOpenStory,
   onAddVipFunds,
   onLeaveTable,
 }) => {
@@ -88,7 +82,7 @@ export const PokerTopBar: React.FC<PokerTopBarProps> = ({
   return (
     <>
       <div className="w-full bg-gradient-to-r from-neutral-950 via-stone-900 to-neutral-950 border border-amber-500/40 rounded-2xl px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 shadow-2xl backdrop-blur-xl">
-        {/* Lado Esquerdo: Voltar + Info da Mesa VIP */}
+        {/* Lado Esquerdo: Voltar + Info da Mesa */}
         <div className="flex items-center gap-2.5">
           <Button
             variant="outline"
@@ -102,18 +96,22 @@ export const PokerTopBar: React.FC<PokerTopBarProps> = ({
             </a>
           </Button>
 
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 flex items-center gap-1.5 drop-shadow">
-                <Crown className="w-4 h-4 text-amber-400" />
-                {tableName}
+              <h1 className="text-sm sm:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 flex items-center gap-1.5 drop-shadow truncate max-w-[46vw] sm:max-w-none">
+                <Crown className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="truncate">{tableName}</span>
               </h1>
-              <Badge className="bg-amber-500/20 text-amber-300 border-amber-400/40 text-[10px] py-0 px-2 font-bold">
+              <Badge className="bg-amber-500/20 text-amber-300 border-amber-400/40 text-[10px] py-0 px-2 font-bold shrink-0">
                 {blinds}
               </Badge>
+              <span className="sm:hidden inline-flex items-center gap-1 text-[10px] text-emerald-400 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                {status === 'open' ? 'Ao vivo' : '…'}
+              </span>
             </div>
-            <div className="text-[10px] text-muted-foreground flex items-center gap-2">
-              <span>LuccaBet VIP High Roller Suite</span>
+            <div className="hidden sm:flex text-[10px] text-muted-foreground items-center gap-2">
+              <span>Brazuca Bet • Texas Hold&apos;em</span>
               <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 {status === 'open' ? 'Ao Vivo' : 'Conectando'}
@@ -122,14 +120,14 @@ export const PokerTopBar: React.FC<PokerTopBarProps> = ({
           </div>
         </div>
 
-        {/* Lado Direito: Saldo + Faucet + Temas + Story Flex + Sair */}
+        {/* Lado Direito: Saldo + Recarregar + Mesas + Tema + Som + Sair */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Saldo do Jogador */}
+          {/* Saldo */}
           <div className="px-3 py-1 rounded-xl bg-black/60 border border-amber-400/40 flex items-center gap-1.5 shadow-inner">
             <Coins className="w-4 h-4 text-amber-400" />
             <div className="flex flex-col text-right">
               <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold leading-none">
-                Banca VIP
+                Saldo
               </span>
               <span className="text-xs sm:text-sm font-black text-amber-300 tabular-nums leading-tight">
                 {formatBRLShort(userBalance)}
@@ -137,25 +135,15 @@ export const PokerTopBar: React.FC<PokerTopBarProps> = ({
             </div>
           </div>
 
-          {/* Botão de Recarregar Banca VIP (+Fichas para Story Flex) */}
+          {/* Recarregar saldo */}
           <Button
             size="sm"
             onClick={() => setFaucetOpen(true)}
             className="h-9 px-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold text-xs shadow-md"
-            title="Recarregar Fichas VIP para jogar e postar no story"
+            title="Adicionar saldo para jogar"
           >
-            <Sparkles className="w-3.5 h-3.5 mr-1 text-amber-300" />
-            <span className="hidden sm:inline">+ Banca VIP</span>
-          </Button>
-
-          {/* Botão Story Flex (O Destaque do Pedido!) */}
-          <Button
-            size="sm"
-            onClick={onOpenStory}
-            className="h-9 px-3 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-600 hover:to-yellow-600 text-black font-black text-xs shadow-[0_0_15px_rgba(251,191,36,0.6)] animate-pulse"
-          >
-            <Camera className="w-4 h-4 mr-1.5" />
-            <span>Story Flex</span>
+            <PlusCircle className="w-3.5 h-3.5 mr-1 text-amber-300" />
+            <span className="hidden sm:inline">+ Saldo</span>
           </Button>
 
           {/* Seletor de Mesas */}
@@ -176,14 +164,14 @@ export const PokerTopBar: React.FC<PokerTopBarProps> = ({
                 variant="outline"
                 size="icon"
                 className="h-9 w-9 border-white/20 bg-black/40 hover:bg-white/10 text-amber-300"
-                title="Trocar Cor do Feltro da Mesa"
+                title="Trocar cor do feltro da mesa"
               >
                 <Palette className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-neutral-950 border-amber-500/40 text-white">
               <DropdownMenuLabel className="text-xs text-amber-300 font-bold">
-                Ambiente da Mesa
+                Cor do Feltro
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-white/10" />
               {THEMES.map((th) => (
@@ -225,24 +213,24 @@ export const PokerTopBar: React.FC<PokerTopBarProps> = ({
         </div>
       </div>
 
-      {/* Modal de Recarga de Banca VIP (Faucet Instantâneo) */}
+      {/* Modal de Recarga de Saldo */}
       <Dialog open={faucetOpen} onOpenChange={setFaucetOpen}>
         <DialogContent className="bg-gradient-to-b from-neutral-900 via-stone-950 to-black border-2 border-amber-400/60 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-amber-300 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-400" /> Recarregar Banca VIP
+              <PlusCircle className="w-5 h-5 text-amber-400" /> Recarregar Saldo
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Adicione fichas de alta cotação para jogar nas mesas de High Roller e tirar prints milionários para o Story!
+              Adicione fichas à sua banca e continue jogando.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-2 gap-2.5 py-3">
             {[
-              { amount: 10000, label: 'R$ 10.000', desc: 'Starter High Roller' },
-              { amount: 50000, label: 'R$ 50.000', desc: 'VIP Lounge Regular' },
-              { amount: 250000, label: 'R$ 250.000', desc: 'Diamond Whale 💎' },
-              { amount: 1000000, label: 'R$ 1.000.000', desc: 'Bilionário Macau 👑' },
+              { amount: 10000, label: 'R$ 10.000', desc: 'Para começar' },
+              { amount: 50000, label: 'R$ 50.000', desc: 'Banca média' },
+              { amount: 250000, label: 'R$ 250.000', desc: 'Banca alta' },
+              { amount: 1000000, label: 'R$ 1.000.000', desc: 'Banca turbinada' },
             ].map((pkg, i) => (
               <Button
                 key={i}
@@ -265,10 +253,10 @@ export const PokerTopBar: React.FC<PokerTopBarProps> = ({
         <DialogContent className="bg-gradient-to-b from-neutral-900 via-stone-950 to-black border-2 border-amber-400/60 text-white max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-amber-300 flex items-center gap-2">
-              <Crown className="w-5 h-5 text-amber-400" /> Salas de Poker VIP
+              <Crown className="w-5 h-5 text-amber-400" /> Salas de Poker
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Escolha seu nível de limites e entre nas melhores mesas com jogadores e bots
+              Escolha os limites e entre na mesa
             </DialogDescription>
           </DialogHeader>
 
@@ -299,13 +287,20 @@ export const PokerTopBar: React.FC<PokerTopBarProps> = ({
                 </div>
                 <div className="text-[11px] text-muted-foreground mt-1 flex items-center justify-between">
                   <span>Buy-in: {formatBRLShort(t.minBuyIn)} – {formatBRLShort(t.maxBuyIn)}</span>
-                  <span className="text-emerald-400 font-bold">Entrar na Sala →</span>
+                  <span className="text-emerald-400 font-bold">Entrar →</span>
                 </div>
               </button>
             ))}
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Indicador de conexão silencioso */}
+      {status === 'closed' && (
+        <div className="text-[10px] text-red-400 flex items-center gap-1 justify-end pr-2">
+          <Wifi className="w-3 h-3" /> Reconnectando…
+        </div>
+      )}
     </>
   );
 };
